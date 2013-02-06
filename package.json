@@ -1,0 +1,23 @@
+{
+  "name": "jinja",
+  "version": "0.0.0",
+  "description": "JavaScript templating engine based on Jinja2",
+  "main": "jinja.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:sstur/jinja.git"
+  },
+  "keywords": [
+    "jinja",
+    "template",
+    "javascript",
+    "view",
+    "engine",
+    "python"
+  ],
+  "author": "sstur@me.com",
+  "license": "BSD"
+}
