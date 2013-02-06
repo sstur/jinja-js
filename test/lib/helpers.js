@@ -26,10 +26,13 @@
   };
 
   exports.compile = function(text, opts) {
+    opts = opts || {};
     var name = opts.filename;
-    var file = (~name.indexOf('.')) ? name : name + '.html';
-    file = './views/' + file;
-    fileCache[file] = text;
+    if (name) {
+      var file = (~name.indexOf('.')) ? name : name + '.html';
+      file = './views/' + file;
+      fileCache[file] = text;
+    }
     //return just the render function
     return jinja.compile(text).render;
   };

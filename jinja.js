@@ -5,6 +5,7 @@
  * - auto escapes html by default (the filter is "html" not "e")
  * - arguments to filters are specified the "Liquid" way: `{{ text | filter: "arg" }}`
  * - Only "html" and "safe" filters are built in
+ * - A expressions are evaluated before filters; `foo|length > 1` is invalid
  * Note:
  * - subscript notation takes only primitive literals, such as `a[0]`, `a["b"]` or `a[true]`
  * - filter arguments can only be primitive literals
@@ -12,6 +13,8 @@
  * Todo:
  * - allow filter args like `{{ text | filter("arg") }}`
  * - whitespace control
+ * - else in for tag
+ * - is/isnot -> ==/!=
  *
  */
 /*global require, exports */
@@ -25,7 +28,7 @@
   var VARIABLE = /^(?:([a-z_]\w*)(\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\])*)$/i;
   //all instances of literals and variables including dot and subscript notation
   var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([a-z_]\w*)(\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
-  var OPERATORS = /(==|!=|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
+  var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   var PROPS = /\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\]/g;
   //extended (english) operators
   var EOPS = /\b(and|or|not)\b/g;
@@ -43,6 +46,7 @@
   };
 
   function Parser() {
+    this.nest = [];
     this.compiled = [];
     this.childBlocks = 0;
     this.parentBlocks = 0;
@@ -216,22 +220,30 @@
     'if': function(expr) {
       this.parseExpr(expr);
       this.push('if (' + this.parseExpr(expr) + ') {');
+      this.nest.unshift('if');
     },
     'else': function() {
-      this.push('} else {');
+      if (this.nest[0] == 'for') {
+        this.push('}, function() {');
+      } else {
+        this.push('} else {');
+      }
     },
     'elseif': function(expr) {
       this.push('} else if (' + this.parseExpr(expr) + ') {');
     },
     'endif': function() {
+      this.nest.shift();
       this.push('}');
     },
     'for': function(expr) {
       var pieces = expr.split(' in ');
       var loopvar = pieces[0].trim();
       this.push('each(' + this.parseVar(pieces[1]) + ',' + JSON.stringify(loopvar) + ',function() {');
+      this.nest.unshift('for');
     },
     'endfor': function() {
+      this.nest.shift();
       this.push('});');
     },
     'set': function(expr) {
@@ -252,8 +264,10 @@
         blockName = 'block_' + (this.escName(name) || this.childBlocks);
         this.push('function ' + blockName + '() {');
       }
+      this.nest.unshift('block');
     },
     'endblock': function() {
+      this.nest.shift();
       if (this.isParent) {
         this.push('});');
       } else
@@ -354,15 +368,16 @@
       }
       output.push(val);
     };
-    var each = function(obj, loopvar, fn) {
+    var each = function(obj, loopvar, fn1, fn2) {
       if (obj == null) return;
       var loop = {}, ctx = {loop: loop};
       push(ctx);
       var arr = Array.isArray(obj) ? obj : Object.keys(obj);
       for (var i = 0, len = arr.length; i < len; i++) {
         //todo: set loop properties
-        fn(ctx[loopvar] = arr[i]);
+        fn1(ctx[loopvar] = arr[i]);
       }
+      if (len == 0 && fn2) fn2();
       pop();
     };
     var renderBlock = function(fn) {
