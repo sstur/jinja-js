@@ -304,6 +304,7 @@
   tagHandlers.elif = tagHandlers.elseif;
 
   var runtimeRender = function render(data, opts) {
+    data = data || {};
     var defaults = {autoEscape: 'html'};
     var filters = {
       html: function(val) {

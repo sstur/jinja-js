@@ -273,4 +273,21 @@
 
   });
 
+  describe('Tag: include', function () {
+
+    it('includes the given template', function () {
+      jinja.compile('{{array.length}}', { filename: 'included_2.html' });
+      expect(jinja.compile('{% include "included_2.html" %}')({ array: ['foo'] }))
+        .to.equal('1');
+    });
+
+    it('includes from parent templates', function () {
+      jinja.compile('foobar', { filename: 'foobar' });
+      jinja.compile('{% include "foobar" %}', { filename: 'parent' });
+      expect(jinja.compile('{% extends "parent" %}')())
+        .to.equal('foobar');
+    });
+
+  });
+
 })();
