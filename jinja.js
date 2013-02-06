@@ -3,11 +3,11 @@
  * In the interest of simplicity, it deviates from Jinja2 as follows:
  * - Line statements, whitespace control, cycle, super, macros are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
- * - arguments to filters are specified the "Liquid" way: `{{ text | filter: "arg" }}`
  * - Only "html" and "safe" filters are built in
- * - A expressions are evaluated before filters; `foo|length > 1` is invalid
+ * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
+ * - Filters are not valid in expressions; `foo|length > 1` is invalid
  * Note:
- * - `{% for n in object %}` will store the object's keys as n
+ * - `{% for n in object %}` will iterate the object's keys
  * - subscript notation takes only primitive literals, such as `a[0]`, `a["b"]` or `a[true]`
  * - filter arguments can only be primitive literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
@@ -30,7 +30,7 @@
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   var PROPS = /\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\]/g;
   //extended (english) operators
-  var EOPS = /\b(and|or|not)\b/g;
+  var EOPS = /\b(and|or|not|is|isnot)\b/g;
 
   var delimeters = {
     '{%': 'tag',
@@ -41,7 +41,9 @@
   var operators = {
     and: '&&',
     or: '||',
-    not: '!'
+    not: '!',
+    is: '==',
+    isnot: '!='
   };
 
   function Parser() {
