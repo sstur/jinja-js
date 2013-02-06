@@ -110,23 +110,23 @@
       expect(tpl({ bar: false })).to.equal('bop');
     });
 
-    //describe('in "for" tags', function () {
-    //  it('can be used as fallback', function () {
-    //    var tpl = jinja.compile('{% for foo in bar %}blah{% else %}hooray!{% endfor %}');
-    //    expect(tpl({ bar: [] })).to.equal('hooray!');
-    //    expect(tpl({ bar: {}})).to.equal('hooray!');
-    //
-    //    expect(tpl({ bar: [1] })).to.equal('blah');
-    //    expect(tpl({ bar: { foo: 'foo' }})).to.equal('blah');
-    //  });
-    //
-    //  it('throws if using "elseif"', function () {
-    //    var fn = function () {
-    //      jinja.compile('{% for foo in bar %}hi!{% elseif blah %}nope{% endfor %}');
-    //    };
-    //    expect(fn).to.throwException();
-    //  });
-    //});
+    describe('in "for" tags', function () {
+      it('can be used as fallback', function () {
+        var tpl = jinja.compile('{% for foo in bar %}blah{% else %}hooray!{% endfor %}');
+        expect(tpl({ bar: [] })).to.equal('hooray!');
+        expect(tpl({ bar: {}})).to.equal('hooray!');
+
+        expect(tpl({ bar: [1] })).to.equal('blah');
+        expect(tpl({ bar: { foo: 'foo' }})).to.equal('blah');
+      });
+
+      it('throws if using "elseif"', function () {
+        var fn = function () {
+          jinja.compile('{% for foo in bar %}hi!{% elseif blah %}nope{% endfor %}');
+        };
+        expect(fn).to.throwException();
+      });
+    });
   });
 
 })();
