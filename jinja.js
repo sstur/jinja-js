@@ -43,10 +43,23 @@
     this.compiled = [];
     this.childBlocks = 0;
     this.parentBlocks = 0;
+    this.isSilent = false;
   }
+
+  Parser.prototype.silent = function(silent) {
+    if (this.isSilent === silent) return;
+    if (this.isSilent) {
+      this.compiled = this._compiled;
+    } else {
+      this._compiled = this.compiled;
+      this.compiled = [];
+    }
+    this.isSilent = !this.isSilent;
+  };
 
   Parser.prototype.parse = function(src) {
     this.tokenize(src);
+    this.silent(false);
     return this.compiled.join('\n');
   };
 
@@ -240,6 +253,7 @@
         this.compiled.push('renderBlock(typeof ' + blockName + ' == "function" ? ' + blockName + ' : function() {');
       } else
       if (this.hasParent) {
+        this.silent(false);
         ++this.childBlocks;
         blockName = 'block_' + (this.escName(name) || this.childBlocks);
         this.compiled.push('function ' + blockName + '() {');
@@ -251,6 +265,7 @@
       } else
       if (this.hasParent) {
         this.compiled.push('}');
+        this.silent(true);
       }
     },
     'extends': function(name) {
@@ -260,6 +275,7 @@
       this.tokenize(parentSrc);
       this.isParent = false;
       this.hasParent = true;
+      this.silent(true);
     },
     'include': function(name) {
       name = this.parseQuoted(name);
@@ -371,7 +387,8 @@
     var code = parser.parse(markup);
     runtime = runtime || (runtime = runtimeRender.toString());
     code = runtime.replace('["CODE"]', code);
-    return {render: new Function('return (' + code + ')')()};
+    var fn = new Function('return (' + code + ')')();
+    return {render: fn};
   };
 
   jinja.render = function(markup, data, opts) {

@@ -1,6 +1,10 @@
 {
   "name": "jinja",
-  "version": "0.0.0",
+  "author": {
+    "name": "Simon Sturmer",
+    "email": "sstur@me.com"
+  },
+  "version": "0.1.0",
   "description": "JavaScript templating engine based on Jinja2",
   "main": "jinja.js",
   "scripts": {
@@ -10,14 +14,22 @@
     "type": "git",
     "url": "git@github.com:sstur/jinja.git"
   },
+  "devDependencies": {
+    "expect.js": "*",
+    "mocha": "*"
+  },
   "keywords": [
-    "jinja",
     "template",
+    "templating",
     "javascript",
     "view",
     "engine",
-    "python"
+    "jinja",
+    "jinja2",
+    "python",
+    "django",
+    "twig",
+    "liquid"
   ],
-  "author": "sstur@me.com",
   "license": "BSD"
 }

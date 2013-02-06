@@ -3,9 +3,9 @@
   "use strict";
   var fs = require('fs');
 
-  var fileCache = global.fileCache || {};
+  var fileCache = global.fileCache || (global.fileCache = {});
 
-  var jinja = require('jinja');
+  var jinja = require('../../jinja');
 
   jinja.readTemplateFile = getTemplate;
 
@@ -23,6 +23,15 @@
     split: function(str, sep) {
       return ('' + str).split(sep || '');
     }
+  };
+
+  exports.compile = function(text, opts) {
+    var name = opts.filename;
+    var file = (~name.indexOf('.')) ? name : name + '.html';
+    file = './views/' + file;
+    fileCache[file] = text;
+    //return just the render function
+    return jinja.compile(text).render;
   };
 
   exports.render = function(name, context, opts) {
