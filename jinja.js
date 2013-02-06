@@ -124,13 +124,17 @@
     var parser = this;
     src = src.trim();
     var i = src.indexOf(':');
-    if (i < 0) i = src.indexOf('(');
+    //to allow parens syntax; kinda hacky
+    if (i < 0 && src.slice(-1) == ')') {
+      src = src.slice(0, -1);
+      i = src.indexOf('(');
+    }
     if (i < 0) return JSON.stringify([src]);
-    var name = src.slice(0, i), args = src.slice(i + 1), arr = [JSON.stringify(name)];
-    args.replace(LITERALS, function(_, arg) {
+    var name = src.slice(0, i), args = src.slice(i + 1), arr = [name];
+    args.replace(LITERALS, function(arg) {
       arr.push(parser.parseQuoted(arg));
     });
-    return '[' + arr.join(',') + ']';
+    return '[' + JSON.stringify(arr).slice(1, -1) + ']';
   };
 
   Parser.prototype.extractEnt = function(src, regex, placeholder) {
