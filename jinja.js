@@ -7,13 +7,13 @@
  * - Only "html" and "safe" filters are built in
  * - A expressions are evaluated before filters; `foo|length > 1` is invalid
  * Note:
+ * - `{% for n in object %}` will store the object's keys as n
  * - subscript notation takes only primitive literals, such as `a[0]`, `a["b"]` or `a[true]`
  * - filter arguments can only be primitive literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  * Todo:
  * - allow filter args like `{{ text | filter("arg") }}`
  * - whitespace control
- * - else in for tag
  * - is/isnot -> ==/!=
  *
  */
@@ -370,11 +370,11 @@
     };
     var each = function(obj, loopvar, fn1, fn2) {
       if (obj == null) return;
-      var loop = {}, ctx = {loop: loop};
+      var arr = Array.isArray(obj) ? obj : Object.keys(obj), len = arr.length;
+      var ctx = {loop: {length: len}};
       push(ctx);
-      var arr = Array.isArray(obj) ? obj : Object.keys(obj);
-      for (var i = 0, len = arr.length; i < len; i++) {
-        //todo: set loop properties
+      for (var i = 0; i < len; i++) {
+        extend(ctx.loop, {index: i + 1, index0: i});
         fn1(ctx[loopvar] = arr[i]);
       }
       if (len == 0 && fn2) fn2();

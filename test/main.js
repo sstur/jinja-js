@@ -129,4 +129,66 @@
     });
   });
 
+  //describe('Tag: extends', function () {
+  //
+  //  it('throws on circular references', function () {
+  //    var circular1 = "{% extends 'extends_circular2.html' %}{% block content %}Foobar{% endblock %}",
+  //      circular2 = "{% extends 'extends_circular1.html' %}{% block content %}Barfoo{% endblock %}",
+  //      fn = function () {
+  //        jinja.compile(circular1, { filename: 'extends_circular1.html' });
+  //        jinja.compile(circular2, { filename: 'extends_circular2.html' })();
+  //      };
+  //    expect(fn).to.throwException();
+  //  });
+  //
+  //  it('throws if not first tag', function () {
+  //    var fn = function () {
+  //      jinja.compile('asdf {% extends foo %}')();
+  //    };
+  //    expect(fn).to.throwException();
+  //  });
+  //});
+
+  describe('Tag: for', function () {
+
+    var tpl = jinja.compile('{% for foo in bar %}{{ foo }}, {% endfor %}');
+    it('loops arrays', function () {
+      expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('foo, bar, baz, ');
+    });
+
+    it('loops objects', function () {
+      expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('baz, pow, foo, ');
+    });
+
+    describe('loop object', function () {
+      it('index0', function () {
+        var tpl = jinja.compile('{% for foo in bar %}[{{ loop.index0 }}, {{ foo }}]{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('[0, foo][1, bar][2, baz]');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('[0, baz][1, pow][2, foo]');
+      });
+
+      it('context', function () {
+        var inner = jinja.compile('{{ f }}', { filename: "inner" }),
+          tpl = jinja.compile('{{ f }}{% for f in bar %}{{ f }}{% include "inner" %}{{ f }}{% endfor %}{{ f }}');
+        expect(tpl({ f: 'z', bar: ['a'] })).to.equal('zaaaz');
+        expect(tpl({ bar: ['a'] })).to.equal('aaa');
+      });
+
+      it('index', function () {
+        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index }}{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('123');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('123');
+      });
+
+      it('index0', function () {
+        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index0 }}{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('012');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('012');
+      });
+
+    });
+
+
+  });
+
 })();
