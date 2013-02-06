@@ -9,6 +9,9 @@
  * - subscript notation takes only primitive literals, such as `a[0]`, `a["b"]` or `a[true]`
  * - filter arguments can only be primitive literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
+ * Todo:
+ * - allow filter args like `{{ text | filter("arg") }}`
+ * - whitespace control
  *
  */
 /*global require, exports */
@@ -46,20 +49,14 @@
     this.isSilent = false;
   }
 
-  Parser.prototype.silent = function(silent) {
-    if (this.isSilent === silent) return;
-    if (this.isSilent) {
-      this.compiled = this._compiled;
-    } else {
-      this._compiled = this.compiled;
-      this.compiled = [];
+  Parser.prototype.push = function(line) {
+    if (!this.isSilent) {
+      this.compiled.push(line);
     }
-    this.isSilent = !this.isSilent;
   };
 
   Parser.prototype.parse = function(src) {
     this.tokenize(src);
-    this.silent(false);
     return this.compiled.join('\n');
   };
 
@@ -79,20 +76,21 @@
         continue;
       }
       var text = src.slice(prevEnd, tagStart);
+      this.textHandler(text);
       var tag = src.slice(tagStart, tagEnd + 2);
-      this.tokenHandler(text, tag);
+      this.tokenHandler(tag);
       prevEnd = tagEnd + 2;
       offset = 0;
     }
     text = src.slice(prevEnd);
-    this.tokenHandler(text);
+    this.textHandler(text);
   };
 
-  Parser.prototype.tokenHandler = function(text, tag) {
-    var compiled = this.compiled;
-    if (text) {
-      compiled.push('write(' + JSON.stringify(text) + ');');
-    }
+  Parser.prototype.textHandler = function(text) {
+    this.push('write(' + JSON.stringify(text) + ');');
+  };
+
+  Parser.prototype.tokenHandler = function(tag) {
     if (!tag) return;
     var type = delimeters[tag.slice(0, 2)];
     if (type == 'tag') {
@@ -102,9 +100,9 @@
       var parts = tag.slice(2, -2).split('|');
       if (parts.length > 1) {
         var filters = parts.slice(1).map(this.parseFilter); //kinda risky: detaches 'this'
-        compiled.push('filter(' + this.parseExpr(parts[0]) + ',' + filters.join(',') + ');');
+        this.push('filter(' + this.parseExpr(parts[0]) + ',' + filters.join(',') + ');');
       } else {
-        compiled.push('filter(' + this.parseExpr(parts[0]) + ');');
+        this.push('filter(' + this.parseExpr(parts[0]) + ');');
       }
     }
   };
@@ -116,9 +114,7 @@
     if (!handler) {
       throw new Error('Invalid tag: ' + str);
     }
-    //this is kinda hacky; the handler should push
-    var code = handler.call(this, str.slice(directive.length).trim());
-    if (code != null) this.compiled.push(code);
+    handler.call(this, str.slice(directive.length).trim());
   };
 
   Parser.prototype.parseFilter = function(src) {
@@ -128,9 +124,7 @@
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i), args = src.slice(i + 1), arr = [JSON.stringify(name)];
     args.replace(LITERALS, function(_, arg) {
-      //this allows output of single-quote string literals
-      //arg = parser.parseQuoted(arg);
-      arr.push(arg);
+      arr.push(parser.parseQuoted(arg));
     });
     return '[' + arr.join(',') + ']';
   };
@@ -221,51 +215,51 @@
   var tagHandlers = {
     'if': function(expr) {
       this.parseExpr(expr);
-      return 'if (' + this.parseExpr(expr) + ') {'
+      this.push('if (' + this.parseExpr(expr) + ') {');
     },
     'else': function() {
-      return '} else {';
+      this.push('} else {');
     },
     'elseif': function(expr) {
-      return '} else if (' + this.parseExpr(expr) + ') {';
+      this.push('} else if (' + this.parseExpr(expr) + ') {');
     },
     'endif': function() {
-      return '}';
+      this.push('}');
     },
     'for': function(expr) {
       var pieces = expr.split(' in ');
       var loopvar = pieces[0].trim();
-      return 'each(' + this.parseVar(pieces[1]) + ',' + JSON.stringify(loopvar) + ',function() {';
+      this.push('each(' + this.parseVar(pieces[1]) + ',' + JSON.stringify(loopvar) + ',function() {');
     },
     'endfor': function() {
-      return '});';
+      this.push('});');
     },
     'set': function(expr) {
       var i = expr.indexOf('=');
       var name = expr.slice(0, i).trim();
       var value = expr.slice(i + 1).trim();
-      return 'set(' + JSON.stringify(name) + ',' + this.parseExpr(value) + ');';
+      this.push('set(' + JSON.stringify(name) + ',' + this.parseExpr(value) + ');');
     },
     'block': function(name) {
       if (this.isParent) {
         ++this.parentBlocks;
         var blockName = 'block_' + (this.escName(name) || this.parentBlocks);
-        this.compiled.push('renderBlock(typeof ' + blockName + ' == "function" ? ' + blockName + ' : function() {');
+        this.push('renderBlock(typeof ' + blockName + ' == "function" ? ' + blockName + ' : function() {');
       } else
       if (this.hasParent) {
-        this.silent(false);
+        this.isSilent = false;
         ++this.childBlocks;
         blockName = 'block_' + (this.escName(name) || this.childBlocks);
-        this.compiled.push('function ' + blockName + '() {');
+        this.push('function ' + blockName + '() {');
       }
     },
     'endblock': function() {
       if (this.isParent) {
-        this.compiled.push('});');
+        this.push('});');
       } else
       if (this.hasParent) {
-        this.compiled.push('}');
-        this.silent(true);
+        this.push('}');
+        this.isSilent = true;
       }
     },
     'extends': function(name) {
@@ -275,7 +269,8 @@
       this.tokenize(parentSrc);
       this.isParent = false;
       this.hasParent = true;
-      this.silent(true);
+      //silence output until we enter a child block
+      this.isSilent = true;
     },
     'include': function(name) {
       name = this.parseQuoted(name);
