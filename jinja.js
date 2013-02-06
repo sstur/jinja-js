@@ -125,6 +125,7 @@
     var parser = this;
     src = src.trim();
     var i = src.indexOf(':');
+    //if (i < 0) i = src.indexOf('(');
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i), args = src.slice(i + 1), arr = [JSON.stringify(name)];
     args.replace(LITERALS, function(_, arg) {
@@ -170,6 +171,8 @@
     var parsed2 = parser.extractEnt(parsed1.src, OPERATORS, '&');
     //remove white space
     var simplified = parsed2.src = parsed2.src.replace(/\s+/g, '');
+    //allow 'not' unary operator
+    simplified = simplified.replace(/!+i/g, 'i');
     //simplify logical grouping
     while (simplified != (simplified = simplified.replace(/\(i(&i)*\)/g, 'i')));
     if (!simplified.match(/^i(&i)*$/)) {

@@ -188,6 +188,88 @@
 
     });
 
+  });
+
+  describe('Tag: if', function () {
+
+    it('tests truthy and falsy values', function () {
+      var tpl = jinja.compile('{% if foo %}hi!{% endif %}{% if bar %}nope{% endif %}');
+      expect(tpl({ foo: 1, bar: false })).to.equal('hi!');
+
+      tpl = jinja.compile('{% if !foo %}hi!{% endif %}{% if !bar %}nope{% endif %}');
+      expect(tpl({ foo: 1, bar: false }))
+        .to.equal('nope');
+    });
+
+    it('can use not in place of !', function () {
+      var tpl = jinja.compile('{% if not foo %}hi!{% endif %}{% if not bar %}nope{% endif %}');
+      expect(tpl({ foo: true, bar: false }))
+        .to.equal('nope', 'not operator');
+    });
+
+    it('can use && and ||', function () {
+      var tpl = jinja.compile('{% if foo && (bar || baz) %}hi!{% endif %}');
+      expect(tpl({ foo: true, bar: true })).to.equal('hi!');
+      expect(tpl({ foo: true, baz: true })).to.equal('hi!');
+      expect(tpl({ foo: false })).to.equal('');
+      expect(tpl({ foo: true, bar: false, baz: false })).to.equal('');
+    });
+
+    it('can use "and" and "or" instead', function () {
+      var tpl = jinja.compile('{% if foo and bar %}hi!{% endif %}');
+      expect(tpl({ foo: true, bar: true })).to.equal('hi!');
+
+      tpl = jinja.compile('{% if foo or bar %}hi!{% endif %}');
+      expect(tpl({ foo: false, bar: true })).to.equal('hi!');
+    });
+
+    it('can use the "%" operator', function () {
+      var tpl = jinja.compile('{% if foo % 2 == 0 %}hi!{% endif %}');
+      expect(tpl({ foo: 4 })).to.equal('hi!');
+
+      tpl = jinja.compile('{% if foo % 2 == 0 %}hi!{% endif %}');
+      expect(tpl({ foo: 5 })).to.equal('');
+
+      tpl = jinja.compile('{% if foo % 2 %}hi!{% endif %}');
+      expect(tpl({ foo: 4 })).to.equal('');
+
+      tpl = jinja.compile('{% if foo % 2 %}hi!{% endif %}');
+      expect(tpl({ foo: 3 })).to.equal('hi!');
+
+    });
+
+    it('throws on bad conditional syntax', function () {
+      var fn1 = function () {
+          jinja.compile('{% if foo bar %}{% endif %}');
+        },
+        fn2 = function () {
+          jinja.compile('{% if foo !== > bar %}{% endif %}');
+        },
+        fn3 = function () {
+          jinja.compile('{% if (foo %}{% endif %}');
+        },
+        fn4 = function () {
+          jinja.compile('{% if foo > bar) %}{% endif %}');
+        };
+      expect(fn1).to.throwException();
+      expect(fn2).to.throwException();
+      expect(fn3).to.throwException();
+      expect(fn4).to.throwException();
+    });
+
+    it('can accept some arbitrary parentheses', function () {
+      var tpl = jinja.compile('{% if (foo) %}bar{% endif %}');
+      expect(tpl({ foo: true })).to.equal('bar');
+
+      tpl = jinja.compile('{% if ( foo ) %}bar{% endif %}');
+      expect(tpl({ foo: true })).to.equal('bar');
+
+      tpl = jinja.compile('{% if ( foo && (bar)) %}bar{% endif %}');
+      expect(tpl({ foo: true, bar: true })).to.equal('bar');
+
+      tpl = jinja.compile('{% if (( foo && (bar )) ) %}bar{% endif %}');
+      expect(tpl({ foo: true, bar: true })).to.equal('bar');
+    });
 
   });
 
