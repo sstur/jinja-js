@@ -1,7 +1,7 @@
 /*!
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]
  * In the interest of simplicity, it deviates from Jinja2 as follows:
- * - Line statements, whitespace control, cycle, super-blocks, macros are not implemented
+ * - Line statements, whitespace control, cycle, super, macros are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
  * - arguments to filters are specified the "Liquid" way: `{{ text | filter: "arg" }}`
  * - Only "html" and "safe" filters are built in
@@ -12,7 +12,6 @@
  * - filter arguments can only be primitive literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  * Todo:
- * - allow filter args like `{{ text | filter("arg") }}`
  * - whitespace control
  * - is/isnot -> ==/!=
  *
@@ -103,7 +102,7 @@
     if (type == 'output') {
       var parts = tag.slice(2, -2).split('|');
       if (parts.length > 1) {
-        var filters = parts.slice(1).map(this.parseFilter); //kinda risky: detaches 'this'
+        var filters = parts.slice(1).map(this.parseFilter.bind(this));
         this.push('filter(' + this.parseExpr(parts[0]) + ',' + filters.join(',') + ');');
       } else {
         this.push('filter(' + this.parseExpr(parts[0]) + ');');
@@ -125,7 +124,7 @@
     var parser = this;
     src = src.trim();
     var i = src.indexOf(':');
-    //if (i < 0) i = src.indexOf('(');
+    if (i < 0) i = src.indexOf('(');
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i), args = src.slice(i + 1), arr = [JSON.stringify(name)];
     args.replace(LITERALS, function(_, arg) {
