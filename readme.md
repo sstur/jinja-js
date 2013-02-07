@@ -33,7 +33,7 @@ It should run on any browser or JS environment that supports ES5 (use es5-shim o
 
 ##Documentation
 
-Thorough documentation for Jinja2 can be found [here][jinjadocs], however this deviates from the
+Thorough documentation for Jinja2 can be found [here][jinjadocs], however ours deviates from the
 official implementation as follows:
 
  - Line statements, whitespace control, cycle, super, macros are not implemented
