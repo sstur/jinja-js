@@ -8,16 +8,24 @@
  * - Filters are not valid in expressions; `foo|length > 1` is invalid
  * Note:
  * - `{% for n in object %}` will iterate the object's keys
- * - subscript notation takes only primitive literals, such as `a[0]`, `a["b"]` or `a[true]`
- * - filter arguments can only be primitive literals
+ * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
+ * - filter arguments can only be literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
- * Todo:
- * - whitespace control
- * - is/isnot -> ==/!=
+ * - whitespace control not implemented
  *
  */
 /*global require, exports */
-(function(require, jinja) {
+var jinja;
+(function(definition) {
+  if (typeof define == 'function') {
+    define(definition);
+  } else
+  if (typeof exports == 'object') {
+    definition(require, exports);
+  } else {
+    definition(function() {}, jinja = {});
+  }
+})(function(require, jinja) {
   "use strict";
   //note: $ is not allowed in dot-notation identifiers
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
@@ -419,4 +427,4 @@
     throw new Error('Not implemented: readTemplateFile');
   };
 
-})(require, exports);
+});
