@@ -53,13 +53,13 @@ Note:
 
 ##Test Coverage
 
-The tests use Mocha and were adapted from another excellent [Jinja project][swig].
+The tests use Mocha and were adapted from another excellent [project][swig].
 
 ##Existing Implementations
 
-There are several existing JavaScript implementations of Jinja and friends, many of which have different objectives
-than this project and may be suitable for some projects but not others. Some worth mentioning include
-[Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquid].
+There are several existing JavaScript implementations of the Jinja family of templating languages, many of which have
+different objectives than this project and may be suitable for some projects but not others. Some worth mentioning
+include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquid].
 
 [nunjucks]: http://github.com/jlongster/nunjucks
 [swig]: http://github.com/paularmstrong/swig
