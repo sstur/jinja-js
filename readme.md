@@ -50,6 +50,7 @@ official implementation as follows:
  - filter arguments can only be literals
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
 
+[jinjadocs]: http://jinja.pocoo.org/docs/templates/
 
 ##Test Coverage
 
