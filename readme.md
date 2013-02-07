@@ -36,14 +36,13 @@ It should run on any browser or JS environment that supports ES5 (use es5-shim o
 Thorough documentation for Jinja2 can be found [here][jinjadocs], however this deviates from the
 official implementation as follows:
 
-###Line statements, whitespace control, cycle, super, macros are not implemented
-
+ - Line statements, whitespace control, cycle, super, macros are not implemented
  - auto escapes html by default (the filter is "html" not "e")
  - Only "html" and "safe" filters are built in
  - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
  - Filters are not valid in expressions; `foo|length > 1` is invalid
 
-###Note:
+Note:
 
  - `{% for n in object %}` will iterate the object's keys
  - subscript notation takes only literals, such as `a[0]` or `a["b"]`
