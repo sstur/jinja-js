@@ -13,14 +13,16 @@ They all have similar syntax for rendering variables, looping and filtering.
 
 Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
-  {% extends "layout.html" %}
-  {% block body %}
-    <ul>
-    {% for user in users %}
-      <li><a href="{{ user.url }}">{{ user.username }}</a></li>
-    {% endfor %}
-    </ul>
-  {% endblock %}
+```
+{% extends "layout.html" %}
+{% block body %}
+  <ul>
+  {% for user in users %}
+    <li><a href="{{ user.url }}">{{ user.username }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}
+```
 
 ##Features
 
