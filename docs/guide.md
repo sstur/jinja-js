@@ -33,7 +33,7 @@ Below is a minimal template that illustrates a few basics. We will cover
         </ul>
     
         <h1>My Webpage</h1>
-        {{ a_variabl
+        {{ a_variable }}
     </body>
     </html>
 
@@ -105,7 +105,7 @@ Variables can be modified by **filters**. Filters are separated from the
  parentheses. Multiple filters can be chained. The output of one filter is
  applied to the next.
 
-`{{ name|striptags|titl` for example will remove all HTML Tags from the
+`{{ name|striptags|title }}` for example will remove all HTML Tags from the
  *name* and title-cases it. Filters that accept arguments have parentheses
  around the arguments, like a function call. This example will join a list
  by commas: `{{ list|join(', ') }}`.
@@ -165,7 +165,7 @@ This template, which we’ll call `base.html`, defines a
         <div id="content">{% block content %}{% endblock %}</div>
         <div id="footer">
             {% block footer %}
-            © Copyright 2008 by <a href="http://domain.invalid/">you</a>.
+            (c) Copyright 2008 by <a href="http://domain.invalid/">you</a>.
             {% endblock %}
         </div>
     </body>
@@ -292,10 +292,10 @@ Jinja supports both, but what is used depends on the application configuration.
 
 If manual escaping is enabled it’s **your** responsibility to escape
  variables if needed. What to escape? If you have a variable that *may*
- include any of the following chars (>, <, &amp;, or ") you
+ include any of the following chars (`>`, `<`, `&`, or `"`) you
  **have to** escape it unless the variable contains well-formed and trusted
  HTML. Escaping works by piping the variable through the `|html` filter:
- `{{ user.username|html }}`.
+ `{{ user.username|`.
 
 ### Working with Automatic Escaping
 
@@ -443,7 +443,7 @@ The following example implements a sitemap with recursive loops:
 
     <ul class="sitemap">
     {% for item in sitemap recursive %}
-        <li><a href="|">{{ item.titl</a>
+        <li><a href="|">{{ item.title }}</a>
         {% if item.children %}
             <ul class="submenu">{{ loop(item.children) }}</ul>
         {% endif %}</li>
@@ -487,8 +487,8 @@ Macros are comparable with functions in regular programming languages. They
 Here a small example of a macro that renders a form element:
 
     {% macro input(name, value='', type='text', size=20) %}
-        <input type="{{ typ" name="{{ nam" value="{{
-            value|" size="{{ siz">
+        <input type="{{ type }}" name="{{ name }}" value="{{
+            value|" size="{{ size }}">
     {% endmacro %}
 
 The macro can then be called like a function in the namespace:
@@ -518,7 +518,7 @@ Inside macros you have access to three special variables:
 Macros also expose some of their internal details. The following attributes
  are available on a macro object:
 
-*   *name*: The name of the macro. `{{ input.nam` will print `input`.
+*   *name*: The name of the macro. `{{ input.name }}` will print `input`.
  
  
 *   *arguments*: A tuple of the names of arguments the macro accepts.
@@ -550,7 +550,7 @@ In some cases it can be useful to pass a macro to another macro. For this
 
     {% macro render_dialog(title, class='dialog') %}
         <div class="{{ class }}">
-            <h2>{{ titl</h2>
+            <h2>{{ title }}</h2>
             <div class="contents">
                 {{ caller() }}
             </div>
@@ -675,11 +675,11 @@ There are two ways to import templates. You can import the complete template
 Imagine we have a helper module that renders forms (called *forms.html*):
 
     {% macro input(name, value='', type='text') %}
-        <input type="{{ typ" value="{{ value|" name="{{ nam">
+        <input type="{{ type }}" value="{{ value|" name="{{ name }}">
     {% endmacro %}
     
     {% macro textarea(name, value='', rows=10, cols=40) %}
-        <textarea name="{{ nam" rows="{{ rows }}" cols="{{ cols
+        <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
             }}">{{ value|</textarea>
     {% endmacro %}
 
@@ -755,4 +755,5 @@ The included template `render_box.html` is
  [8]: https://dl.dropbox.com#import
  [9]: https://dl.dropbox.com#call
  [10]: https://dl.dropbox.com#template-inheritance
- [11]: https://dl.dropbox.com#import-visibility  
+ [11]: https://dl.dropbox.com#import-visibility
+ 

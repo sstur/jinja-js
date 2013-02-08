@@ -17,22 +17,22 @@
     the details later in that document:</p>
 
   <div class="highlight">
-    <pre><code>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-    &lt;title&gt;My Webpage&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;ul id="navigation"&gt;
+    <pre><code>&#x2039;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
+&#x2039;html lang="en"&gt;
+&#x2039;head&gt;
+    &#x2039;title&gt;My Webpage&#x2039;/title&gt;
+&#x2039;/head&gt;
+&#x2039;body&gt;
+    &#x2039;ul id="navigation"&gt;
     {% for item in navigation %}
-        &lt;li&gt;&lt;a href="{{ item.href }}"&gt;{{ item.caption }}&lt;/a&gt;&lt;/li&gt;
+        &#x2039;li&gt;&#x2039;a href="{{ item.href }}"&gt;{{ item.caption }}&#x2039;/a&gt;&#x2039;/li&gt;
     {% endfor %}
-    &lt;/ul&gt;
+    &#x2039;/ul&gt;
 
-    &lt;h1&gt;My Webpage&lt;/h1&gt;
+    &#x2039;h1&gt;My Webpage&#x2039;/h1&gt;
     {{ a_variable }}
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
+&#x2039;/body&gt;
+&#x2039;/html&gt;</code></pre>
   </div>
 
   <p>There are two kinds of delimiters. <code>{% ... %}</code> and <code>{{ ... }}</code>. The first
@@ -147,11 +147,11 @@
 
   <div class="highlight">
     <pre><code>{% raw %}
-    &lt;ul&gt;
+    &#x2039;ul&gt;
     {% for item in seq %}
-        &lt;li&gt;{{ item }}&lt;/li&gt;
+        &#x2039;li&gt;{{ item }}&#x2039;/li&gt;
     {% endfor %}
-    &lt;/ul&gt;
+    &#x2039;/ul&gt;
 {% endraw %}</code></pre>
   </div>
 </div>
@@ -174,23 +174,23 @@
       “child” templates to fill the empty blocks with content:</p>
 
     <div class="highlight">
-      <pre><code>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
-&lt;html lang="en"&gt;
-&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
-&lt;head&gt;
+      <pre><code>&#x2039;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
+&#x2039;html lang="en"&gt;
+&#x2039;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&#x2039;head&gt;
     {% block head %}
-    &lt;link rel="stylesheet" href="style.css" /&gt;
-    &lt;title&gt;{% block title %}{% endblock %} - My Webpage&lt;/title&gt;
+    &#x2039;link rel="stylesheet" href="style.css" /&gt;
+    &#x2039;title&gt;{% block title %}{% endblock %} - My Webpage&#x2039;/title&gt;
     {% endblock %}
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;div id="content"&gt;{% block content %}{% endblock %}&lt;/div&gt;
-    &lt;div id="footer"&gt;
+&#x2039;/head&gt;
+&#x2039;body&gt;
+    &#x2039;div id="content"&gt;{% block content %}{% endblock %}&#x2039;/div&gt;
+    &#x2039;div id="footer"&gt;
         {% block footer %}
-        &amp;copy; Copyright 2008 by &lt;a href="http://domain.invalid/"&gt;you&lt;/a&gt;.
+        (c) Copyright 2008 by &#x2039;a href="http://domain.invalid/"&gt;you&#x2039;/a&gt;.
         {% endblock %}
-    &lt;/div&gt;
-&lt;/body&gt;</code></pre>
+    &#x2039;/div&gt;
+&#x2039;/body&gt;</code></pre>
     </div>
     <p>In this example, the <tt class="docutils literal"><code>{% block %}</code></tt> tags define four blocks that child templates
       can fill in. All the <em>block</em> tag does is to tell the template engine that a
@@ -206,15 +206,15 @@
 {% block title %}Index{% endblock %}
 {% block head %}
     {{ super() }}
-    &lt;style type="text/css"&gt;
+    &#x2039;style type="text/css"&gt;
         .important { color: #336699; }
-    &lt;/style&gt;
+    &#x2039;/style&gt;
 {% endblock %}
 {% block content %}
-    &lt;h1&gt;Index&lt;/h1&gt;
-    &lt;p class="important"&gt;
+    &#x2039;h1&gt;Index&#x2039;/h1&gt;
+    &#x2039;p class="important"&gt;
       Welcome on my awesome homepage.
-    &lt;/p&gt;
+    &#x2039;/p&gt;
 {% endblock %}</code></pre>
     </div>
     <p>The <code>{% extends %}</code>
@@ -250,8 +250,8 @@
       <em>self</em> variable and call the block with that name:</p>
 
     <div class="highlight">
-      <pre><code>&lt;title&gt;{% block title %}{% endblock %}&lt;/title&gt;
-&lt;h1&gt;{{ self.title() }}&lt;/h1&gt;
+      <pre><code>&#x2039;title&gt;{% block title %}{% endblock %}&#x2039;/title&gt;
+&#x2039;h1&gt;{{ self.title() }}&#x2039;/h1&gt;
 {% block body %}{% endblock %}</code></pre>
     </div>
   </div>
@@ -263,10 +263,10 @@
 
     <div class="highlight">
       <pre><code>{% for item in seq %}
-    &lt;li&gt;{% block loop_item %}{{ item }}{% endblock %}&lt;/li&gt;
+    &#x2039;li&gt;{% block loop_item %}{{ item }}{% endblock %}&#x2039;/li&gt;
 {% endfor %}</code></pre>
     </div>
-    <p>This example would output empty <code>&lt;li&gt;</code> items
+    <p>This example would output empty <code>&#x2039;li&gt;</code> items
       because <em>item</em> is unavailable
       inside the block. The reason for this is that if the block is replaced by
       a child template a variable would appear that was not defined in the block or
@@ -278,7 +278,7 @@
 
     <div class="highlight">
       <pre><code>{% for item in seq %}
-    &lt;li&gt;{% block loop_item scoped %}{{ item }}{% endblock %}&lt;/li&gt;
+    &#x2039;li&gt;{% block loop_item scoped %}{{ item }}{% endblock %}&#x2039;/li&gt;
 {% endfor %}</code></pre>
     </div>
     <p>When overriding a block the <em>scoped</em> modifier does not have to be provided.</p>
@@ -325,10 +325,10 @@
 
     <p>If manual escaping is enabled it’s <strong>your</strong> responsibility to escape
       variables if needed. What to escape? If you have a variable that <em>may</em>
-      include any of the following chars (&gt;, &#3C;, &amp;, or ") you
+      include any of the following chars (&gt;, &#x2039;, &amp;, or ") you
       <strong>have to</strong> escape it unless the variable contains well-formed and trusted
-      HTML. Escaping works by piping the variable through the <code>|html</code> filter:
-      <code>{{ user.username|html }}</code>.</p>
+      HTML. Escaping works by piping the variable through the <code>&#x7c;html</code> filter:
+      <code>{{ user.username&#x7c;html }}</code>.</p>
   </div>
   <div class="section" id="working-with-automatic-escaping">
     <h3>Working with Automatic Escaping</h3>
@@ -368,12 +368,12 @@
     provided in a variable called <em>users</em>:</p>
 
   <div class="highlight">
-    <pre><code>&lt;h1&gt;Members&lt;/h1&gt;
-&lt;ul&gt;
+    <pre><code>&#x2039;h1&gt;Members&#x2039;/h1&gt;
+&#x2039;ul&gt;
 {% for user in users %}
-  &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+  &#x2039;li&gt;{{ user.username&#x7c;html }}&#x2039;/li&gt;
 {% endfor %}
-&lt;/ul&gt;</code></pre>
+&#x2039;/ul&gt;</code></pre>
   </div>
   <p>Inside of a for loop block you can access some special variables:</p>
   <table border="1" class="docutils">
@@ -433,7 +433,7 @@
 
   <div class="highlight">
     <pre><code>{% for row in rows %}
-    &lt;li class="{{ loop.cycle('odd', 'even') }}"&gt;{{ row }}&lt;/li&gt;
+    &#x2039;li class="{{ loop.cycle('odd', 'even') }}"&gt;{{ row }}&#x2039;/li&gt;
 {% endfor %}</code></pre>
   </div>
   <p>With Jinja 2.1 an extra <em>cycle</em> helper exists that allows loop-unbound
@@ -447,7 +447,7 @@
 
   <div class="highlight">
     <pre><code>{% for user in users if not user.hidden %}
-    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+    &#x2039;li&gt;{{ user.username&#x7c;html }}&#x2039;/li&gt;
 {% endfor %}</code></pre>
   </div>
   <p>The advantage is that the special <em>loop</em> variable will count correctly thus
@@ -458,13 +458,13 @@
     by using <em>else</em>:</p>
 
   <div class="highlight">
-    <pre><code>&lt;ul&gt;
+    <pre><code>&#x2039;ul&gt;
 {% for user in users %}
-    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+    &#x2039;li&gt;{{ user.username&#x7c;html }}&#x2039;/li&gt;
 {% else %}
-    &lt;li&gt;&lt;em&gt;no users found&lt;/em&gt;&lt;/li&gt;
+    &#x2039;li&gt;&#x2039;em&gt;no users found&#x2039;/em&gt;&#x2039;/li&gt;
 {% endfor %}
-&lt;/ul&gt;</code></pre>
+&#x2039;/ul&gt;</code></pre>
   </div>
   <p>It is also possible to use loops recursively. This is useful if you are
     dealing with recursive data such as sitemaps. To use loops recursively you
@@ -474,14 +474,14 @@
   <p>The following example implements a sitemap with recursive loops:</p>
 
   <div class="highlight">
-    <pre><code>&lt;ul class="sitemap"&gt;
+    <pre><code>&#x2039;ul class="sitemap"&gt;
 {% for item in sitemap recursive %}
-    &lt;li&gt;&lt;a href="{{ item.href|e }}"&gt;{{ item.title }}&lt;/a&gt;
+    &#x2039;li&gt;&#x2039;a href="{{ item.href&#x7c;html }}"&gt;{{ item.title }}&#x2039;/a&gt;
     {% if item.children %}
-        &lt;ul class="submenu"&gt;{{ loop(item.children) }}&lt;/ul&gt;
-    {% endif %}&lt;/li&gt;
+        &#x2039;ul class="submenu"&gt;{{ loop(item.children) }}&#x2039;/ul&gt;
+    {% endif %}&#x2039;/li&gt;
 {% endfor %}
-&lt;/ul&gt;</code></pre>
+&#x2039;/ul&gt;</code></pre>
   </div>
 </div>
 <div class="section" id="if">
@@ -493,11 +493,11 @@
 
   <div class="highlight">
     <pre><code>{% if users %}
-&lt;ul&gt;
+&#x2039;ul&gt;
 {% for user in users %}
-    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+    &#x2039;li&gt;{{ user.username&#x7c;html }}&#x2039;/li&gt;
 {% endfor %}
-&lt;/ul&gt;
+&#x2039;/ul&gt;
 {% endif %}</code></pre>
   </div>
   <p>For multiple branches <em>elif</em> and <em>else</em> can be used like in Python. You can
@@ -526,15 +526,15 @@
 
   <div class="highlight">
     <pre><code>{% macro input(name, value='', type='text', size=20) %}
-    &lt;input type="{{ type }}" name="{{ name }}" value="{{
-        value|e }}" size="{{ size }}"&gt;
+    &#x2039;input type="{{ type }}" name="{{ name }}" value="{{
+        value&#x7c;html }}" size="{{ size }}"&gt;
 {% endmacro %}</code></pre>
   </div>
   <p>The macro can then be called like a function in the namespace:</p>
 
   <div class="highlight">
-    <pre><code>&lt;p&gt;{{ input('username') }}&lt;/p&gt;
-&lt;p&gt;{{ input('password', type='password') }}&lt;/p&gt;</code></pre>
+    <pre><code>&#x2039;p&gt;{{ input('username') }}&#x2039;/p&gt;
+&#x2039;p&gt;{{ input('password', type='password') }}&#x2039;/p&gt;</code></pre>
   </div>
   <p>If the macro was defined in a different template you have to
     <a href="#import"><em>import</em></a> it first.</p>
@@ -582,12 +582,12 @@
 
   <div class="highlight">
     <pre><code>{% macro render_dialog(title, class='dialog') %}
-    &lt;div class="{{ class }}"&gt;
-        &lt;h2&gt;{{ title }}&lt;/h2&gt;
-        &lt;div class="contents"&gt;
+    &#x2039;div class="{{ class }}"&gt;
+        &#x2039;h2&gt;{{ title }}&#x2039;/h2&gt;
+        &#x2039;div class="contents"&gt;
             {{ caller() }}
-        &lt;/div&gt;
-    &lt;/div&gt;
+        &#x2039;/div&gt;
+    &#x2039;/div&gt;
 {% endmacro %}
 
 {% call render_dialog('Hello World') %}
@@ -603,20 +603,20 @@
 
   <div class="highlight">
     <pre><code>{% macro dump_users(users) %}
-    &lt;ul&gt;
+    &#x2039;ul&gt;
     {% for user in users %}
-        &lt;li&gt;&lt;p&gt;{{ user.username|e }}&lt;/p&gt;{{ caller(user) }}&lt;/li&gt;
+        &#x2039;li&gt;&#x2039;p&gt;{{ user.username&#x7c;html }}&#x2039;/p&gt;{{ caller(user) }}&#x2039;/li&gt;
     {% endfor %}
-    &lt;/ul&gt;
+    &#x2039;/ul&gt;
 {% endmacro %}
 
 {% call(user) dump_users(list_of_user) %}
-    &lt;dl&gt;
-        &lt;dl&gt;Realname&lt;/dl&gt;
-        &lt;dd&gt;{{ user.realname|e }}&lt;/dd&gt;
-        &lt;dl&gt;Description&lt;/dl&gt;
-        &lt;dd&gt;{{ user.description }}&lt;/dd&gt;
-    &lt;/dl&gt;
+    &#x2039;dl&gt;
+        &#x2039;dl&gt;Realname&#x2039;/dl&gt;
+        &#x2039;dd&gt;{{ user.realname&#x7c;html }}&#x2039;/dd&gt;
+        &#x2039;dl&gt;Description&#x2039;/dl&gt;
+        &#x2039;dd&gt;{{ user.description }}&#x2039;/dd&gt;
+    &#x2039;/dl&gt;
 {% endcall %}</code></pre>
   </div>
 </div>
@@ -724,12 +724,12 @@
 
   <div class="highlight">
     <pre><code>{% macro input(name, value='', type='text') %}
-    &lt;input type="{{ type }}" value="{{ value|e }}" name="{{ name }}"&gt;
+    &#x2039;input type="{{ type }}" value="{{ value&#x7c;html }}" name="{{ name }}"&gt;
 {% endmacro %}
 
 {% macro textarea(name, value='', rows=10, cols=40) %}
-    &lt;textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
-        }}"&gt;{{ value|e }}&lt;/textarea&gt;
+    &#x2039;textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
+        }}"&gt;{{ value&#x7c;html }}&#x2039;/textarea&gt;
 {% endmacro %}</code></pre>
   </div>
   <p>The easiest and most flexible is importing the whole module into a variable.
@@ -737,26 +737,26 @@
 
   <div class="highlight">
     <pre><code>{% import 'forms.html' as forms %}
-&lt;dl&gt;
-    &lt;dt&gt;Username&lt;/dt&gt;
-    &lt;dd&gt;{{ forms.input('username') }}&lt;/dd&gt;
-    &lt;dt&gt;Password&lt;/dt&gt;
-    &lt;dd&gt;{{ forms.input('password', type='password') }}&lt;/dd&gt;
-&lt;/dl&gt;
-&lt;p&gt;{{ forms.textarea('comment') }}&lt;/p&gt;</code></pre>
+&#x2039;dl&gt;
+    &#x2039;dt&gt;Username&#x2039;/dt&gt;
+    &#x2039;dd&gt;{{ forms.input('username') }}&#x2039;/dd&gt;
+    &#x2039;dt&gt;Password&#x2039;/dt&gt;
+    &#x2039;dd&gt;{{ forms.input('password', type='password') }}&#x2039;/dd&gt;
+&#x2039;/dl&gt;
+&#x2039;p&gt;{{ forms.textarea('comment') }}&#x2039;/p&gt;</code></pre>
   </div>
   <p>Alternatively you can import names from the template into the current
     namespace:</p>
 
   <div class="highlight">
     <pre><code>{% from 'forms.html' import input as input_field, textarea %}
-&lt;dl&gt;
-    &lt;dt&gt;Username&lt;/dt&gt;
-    &lt;dd&gt;{{ input_field('username') }}&lt;/dd&gt;
-    &lt;dt&gt;Password&lt;/dt&gt;
-    &lt;dd&gt;{{ input_field('password', type='password') }}&lt;/dd&gt;
-&lt;/dl&gt;
-&lt;p&gt;{{ textarea('comment') }}&lt;/p&gt;</code></pre>
+&#x2039;dl&gt;
+    &#x2039;dt&gt;Username&#x2039;/dt&gt;
+    &#x2039;dd&gt;{{ input_field('username') }}&#x2039;/dd&gt;
+    &#x2039;dt&gt;Password&#x2039;/dt&gt;
+    &#x2039;dd&gt;{{ input_field('password', type='password') }}&#x2039;/dd&gt;
+&#x2039;/dl&gt;
+&#x2039;p&gt;{{ textarea('comment') }}&#x2039;/p&gt;</code></pre>
   </div>
   <p>Macros and variables starting with one ore more underscores are private and
     cannot be imported.</p>
@@ -831,12 +831,12 @@
         create a list of links using lists and tuples with a for loop:</p>
 
         <div class="last highlight">
-          <pre><code>&lt;ul&gt;
+          <pre><code>&#x2039;ul&gt;
 {% for href, caption in [('index.html', 'Index'), ('about.html', 'About'),
                          ('downloads.html', 'Downloads')] %}
-    &lt;li&gt;&lt;a href="{{ href }}"&gt;{{ caption }}&lt;/a&gt;&lt;/li&gt;
+    &#x2039;li&gt;&#x2039;a href="{{ href }}"&gt;{{ caption }}&#x2039;/a&gt;&#x2039;/li&gt;
 {% endfor %}
-&lt;/ul&gt;</code></pre>
+&#x2039;/ul&gt;</code></pre>
         </div>
       </li>
       <li>(‘tuple’, ‘of’, ‘values’):: Tuples are like lists, just that you can’t modify them. If the tuple
@@ -915,8 +915,8 @@
       <li><code>&gt;=</code>: <em>true</em> if the left hand side is greater or equal to the right hand side.</li>
     </ul>
     <ul class="docutils">
-      <li><code>&#3C;</code>: <em>true</em> if the left hand side is lower than the right hand side.</li>
-      <li><code>&#3C;=</code>: <em>true</em> if the left hand side is lower or equal to the right hand side.</li>
+      <li><code>&#x2039;</code>: <em>true</em> if the left hand side is lower than the right hand side.</li>
+      <li><code>&#x2039;=</code>: <em>true</em> if the left hand side is lower or equal to the right hand side.</li>
     </ul>
   </div>
   <div class="section" id="logic">
