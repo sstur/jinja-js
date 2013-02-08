@@ -6,6 +6,7 @@
  * - Only "html" and "safe" filters are built in
  * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
  * - Filters are not valid in expressions; `foo|length > 1` is invalid
+ * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` -> `!=`)
  * Note:
  * - `{% for n in object %}` will iterate the object's keys
  * - subscript notation takes only literals, such as `a[0]` or `a["b"]`

@@ -1,0 +1,1101 @@
+<h1>Template Designer Documentation</h1>
+<p>This document describes the syntax and semantics of the template engine and
+  will be most useful as reference to those creating Jinja templates.</p>
+<div class="section" id="synopsis">
+  <h2>Synopsis</h2>
+
+  <p>A template is simply a text file. It can generate any text-based format
+    (HTML, XML, CSV etc.). It doesn’t have a specific file extension,
+    <code>.html</code> or <code>.xml</code>
+    are just fine.</p>
+
+  <p>A template contains <strong>variables</strong> or <strong>expressions</strong>, which get replaced with
+    values when the template is evaluated, and tags, which control the logic of
+    the template. The template syntax is heavily inspired by Django and Python.</p>
+
+  <p>Below is a minimal template that illustrates a few basics. We will cover
+    the details later in that document:</p>
+
+  <div class="highlight">
+    <pre><code>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;title&gt;My Webpage&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;ul id="navigation"&gt;
+    {% for item in navigation %}
+        &lt;li&gt;&lt;a href="{{ item.href }}"&gt;{{ item.caption }}&lt;/a&gt;&lt;/li&gt;
+    {% endfor %}
+    &lt;/ul&gt;
+
+    &lt;h1&gt;My Webpage&lt;/h1&gt;
+    {{ a_variable }}
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+  </div>
+  <p>This covers the default settings. The application developer might have
+    changed the syntax from <code>{%</code> <code>foo</code> <code>%}</code> to <code>&lt;%</code> <code>foo</code> <code>%&gt;</code> or something similar.</p>
+
+  <p>There are two kinds of delimiters. <code>{%</code> <code>...</code> <code>%}</code> and <code>{{</code> <code>...</code> <code>}}</code>. The first
+    one is used to execute statements such as for-loops or assign values, the
+    latter prints the result of the expression to the template.</p>
+</div>
+<div class="section" id="variables">
+  <h2>Variables</h2>
+
+  <p>The application passes variables to the templates you can mess around in the
+    template. Variables may have attributes or elements on them you can access
+    too. How a variable looks like, heavily depends on the application providing
+    those.</p>
+
+  <p>You can use a dot (<code>.</code>) to access attributes of a
+    variable, alternative the
+    so-called “subscript” syntax (<code>[]</code>) can be used. The
+    following lines do
+    the same:</p>
+
+  <div class="highlight">
+    <pre><code>{{ foo.bar }}
+{{ foo['bar'] }}
+</code></pre>
+  </div>
+  <p>It’s important to know that the curly braces are <em>not</em> part of the variable
+    but the print statement. If you access variables inside tags don’t put the
+    braces around.</p>
+
+  <p>If a variable or attribute does not exist you will get back an undefined
+    value. What you can do with that kind of value depends on the application
+    configuration, the default behavior is that it evaluates to an empty string
+    if printed and that you can iterate over it, but every other operation fails.</p>
+
+  <div class="admonition-implementation admonition " id="notes-on-subscriptions">
+    <p class="first admonition-title">Implementation</p>
+
+    <p>For convenience sake <code>foo.bar</code> in Jinja2 does the
+      following things on
+      the Python layer:</p>
+    <ul class="simple">
+      <li>check if there is an attribute called <em>bar</em> on <em>foo</em>.</li>
+      <li>if there is not, check if there is an item <code>'bar'</code> in
+        <em>foo</em>.
+      </li>
+      <li>if there is not, return an undefined object.</li>
+    </ul>
+    <p><code>foo['bar']</code> on the other hand works mostly the same
+      with the a small
+      difference in the order:</p>
+    <ul class="simple">
+      <li>check if there is an item <code>'bar'</code> in <em>foo</em>.
+      </li>
+      <li>if there is not, check if there is an attribute called <em>bar</em> on <em>foo</em>.</li>
+      <li>if there is not, return an undefined object.</li>
+    </ul>
+    <p class="last">This is important if an object has an item or attribute with the same
+      name. Additionally there is the <a class="reference internal" href="#attr" title="attr"><code>attr()</code></a> filter that just looks up
+      attributes.</p>
+  </div>
+</div>
+<div class="section" id="filters">
+  <h2>Filters</h2>
+
+  <p>Variables can be modified by <strong>filters</strong>. Filters are separated from the
+    variable by a pipe symbol (<code>|</code>) and may have optional
+    arguments in
+    parentheses. Multiple filters can be chained. The output of one filter is
+    applied to the next.</p>
+
+  <p><code>{{</code> <code>name|striptags|title</code> <code>}}</code> for example will remove all HTML Tags from the
+    <em>name</em> and title-cases it. Filters that accept arguments have parentheses
+    around the arguments, like a function call. This example will join a list
+    by commas: <code>{{</code> <code>list|join(',</code> <code>')</code> <code>}}</code>.</p>
+
+  <p>The <a class="reference internal" href="#builtin-filters"><em>List of Builtin Filters</em></a> below describes all
+    the builtin filters.</p>
+</div>
+<div class="section" id="tests">
+  <h2>Tests</h2>
+
+  <p>Beside filters there are also so called “tests” available. Tests can be used
+    to test a variable against a common expression. To test a variable or
+    expression you add <em>is</em> plus the name of the test after the variable. For
+    example to find out if a variable is defined you can do <tt class="docutils literal"><code>name</code>
+      <code>is</code> <code>defined</code></tt>
+    which will then return true or false depending on if <em>name</em> is defined.</p>
+
+  <p>Tests can accept arguments too. If the test only takes one argument you can
+    leave out the parentheses to group them. For example the following two
+    expressions do the same:</p>
+
+  <div class="highlight">
+    <pre><code>{% if loop.index is divisibleby 3 %}
+{% if loop.index is divisibleby(3) %}
+</code></pre>
+  </div>
+  <p>The <a class="reference internal" href="#builtin-tests"><em>List of Builtin Tests</em></a> below describes all the
+    builtin tests.</p>
+</div>
+<div class="section" id="comments">
+  <h2>Comments</h2>
+
+  <p>To comment-out part of a line in a template, use the comment syntax which is
+    by default set to <code>{#</code> <code>...</code> <code>#}</code>. This is useful to comment out parts of the
+    template for debugging or to add information for other template designers or
+    yourself:</p>
+
+  <div class="highlight">
+    <pre><code>{# note: disabled template because we no longer use this
+    {% for user in users %}
+        ...
+    {% endfor %}
+#}
+</code></pre>
+  </div>
+</div>
+<div class="section" id="escaping">
+  <h2>Escaping</h2>
+
+  <p>It is sometimes desirable or even necessary to have Jinja ignore parts it
+    would otherwise handle as variables or blocks. For example if the default
+    syntax is used and you want to use <code>{{</code> as raw string in
+    the template and
+    not start a variable you have to use a trick.</p>
+
+  <p>The easiest way is to output the variable delimiter (<code>{{</code>)
+    by using a
+    variable expression:</p>
+
+  <div class="highlight">
+    <pre><code>{{ '{{' }}
+</code></pre>
+  </div>
+  <p>For bigger sections it makes sense to mark a block <em>raw</em>. For example to
+    put Jinja syntax as example into a template you can use this snippet:</p>
+
+  <div class="highlight">
+    <pre><code>{% raw %}
+    &lt;ul&gt;
+    {% for item in seq %}
+        &lt;li&gt;{{ item }}&lt;/li&gt;
+    {% endfor %}
+    &lt;/ul&gt;
+{% endraw %}
+</code></pre>
+  </div>
+</div>
+<div class="section" id="template-inheritance">
+  <h2>Template Inheritance</h2>
+
+  <p>The most powerful part of Jinja is template inheritance. Template inheritance
+    allows you to build a base “skeleton” template that contains all the common
+    elements of your site and defines <strong>blocks</strong> that child templates can override.</p>
+
+  <p>Sounds complicated but is very basic. It’s easiest to understand it by starting
+    with an example.</p>
+
+  <div class="section" id="base-template">
+    <h3>Base Template</h3>
+
+    <p>This template, which we’ll call <code>base.html</code>, defines a
+      simple HTML skeleton
+      document that you might use for a simple two-column page. It’s the job of
+      “child” templates to fill the empty blocks with content:</p>
+
+    <div class="highlight">
+      <pre><code>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"&gt;
+&lt;html lang="en"&gt;
+&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;head&gt;
+    {% block head %}
+    &lt;link rel="stylesheet" href="style.css" /&gt;
+    &lt;title&gt;{% block title %}{% endblock %} - My Webpage&lt;/title&gt;
+    {% endblock %}
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="content"&gt;{% block content %}{% endblock %}&lt;/div&gt;
+    &lt;div id="footer"&gt;
+        {% block footer %}
+        &amp;copy; Copyright 2008 by &lt;a href="http://domain.invalid/"&gt;you&lt;/a&gt;.
+        {% endblock %}
+    &lt;/div&gt;
+&lt;/body&gt;
+</code></pre>
+    </div>
+    <p>In this example, the <tt class="docutils literal"><code>{%</code> <code>block</code>
+      <code>%}</code></tt> tags define four blocks that child templates
+      can fill in. All the <em>block</em> tag does is to tell the template engine that a
+      child template may override those portions of the template.</p>
+  </div>
+  <div class="section" id="child-template">
+    <h3>Child Template</h3>
+
+    <p>A child template might look like this:</p>
+
+    <div class="highlight">
+      <pre><code>{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+    &lt;style type="text/css"&gt;
+        .important { color: #336699; }
+    &lt;/style&gt;
+{% endblock %}
+{% block content %}
+    &lt;h1&gt;Index&lt;/h1&gt;
+    &lt;p class="important"&gt;
+      Welcome on my awesome homepage.
+    &lt;/p&gt;
+{% endblock %}
+</code></pre>
+    </div>
+    <p>The <code>{%</code> <code>extends</code> <code>%}</code>
+      tag is the key here. It tells the template engine that
+      this template “extends” another template. When the template system evaluates
+      this template, first it locates the parent. The extends tag should be the
+      first tag in the template. Everything before it is printed out normally and
+      may cause confusion. For details about this behavior and how to take
+      advantage of it, see <a class="reference internal" href="../tricks/#null-master-fallback"><em>Null-Master
+        Fallback</em></a>.</p>
+
+    <p>The filename of the template depends on the template loader. For example the
+      <code>FileSystemLoader</code> allows you to access
+      other templates by giving the
+      filename. You can access templates in subdirectories with an slash:</p>
+
+    <div class="highlight">
+      <pre><code>{% extends "layout/default.html" %}
+</code></pre>
+    </div>
+    <p>But this behavior can depend on the application embedding Jinja. Note that
+      since the child template doesn’t define the <code>footer</code>
+      block, the value from
+      the parent template is used instead.</p>
+
+    <p>You can’t define multiple <tt class="docutils literal"><code>{%</code> <code>block</code>
+      <code>%}</code></tt> tags with the same name in the
+      same template. This limitation exists because a block tag works in “both”
+      directions. That is, a block tag doesn’t just provide a hole to fill - it
+      also defines the content that fills the hole in the <em>parent</em>. If there
+      were two similarly-named <tt class="docutils literal"><code>{%</code> <code>block</code>
+        <code>%}</code></tt> tags in a template, that template’s
+      parent wouldn’t know which one of the blocks’ content to use.</p>
+
+    <p>If you want to print a block multiple times you can however use the special
+      <em>self</em> variable and call the block with that name:</p>
+
+    <div class="highlight">
+      <pre><code>&lt;title&gt;{% block title %}{% endblock %}&lt;/title&gt;
+&lt;h1&gt;{{ self.title() }}&lt;/h1&gt;
+{% block body %}{% endblock %}
+</code></pre>
+    </div>
+  </div>
+  <div class="section" id="block-nesting-and-scope">
+    <h3>Block Nesting and Scope</h3>
+
+    <p>Blocks can be nested for more complex layouts. However per default blocks
+      may not access variables from outer scopes:</p>
+
+    <div class="highlight">
+      <pre><code>{% for item in seq %}
+    &lt;li&gt;{% block loop_item %}{{ item }}{% endblock %}&lt;/li&gt;
+{% endfor %}
+</code></pre>
+    </div>
+    <p>This example would output empty <code>&lt;li&gt;</code> items
+      because <em>item</em> is unavailable
+      inside the block. The reason for this is that if the block is replaced by
+      a child template a variable would appear that was not defined in the block or
+      passed to the context.</p>
+
+    <p>Starting with Jinja 2.2 you can explicitly specify that variables are
+      available in a block by setting the block to “scoped” by adding the <em>scoped</em>
+      modifier to a block declaration:</p>
+
+    <div class="highlight">
+      <pre><code>{% for item in seq %}
+    &lt;li&gt;{% block loop_item scoped %}{{ item }}{% endblock %}&lt;/li&gt;
+{% endfor %}
+</code></pre>
+    </div>
+    <p>When overriding a block the <em>scoped</em> modifier does not have to be provided.</p>
+  </div>
+  <div class="section" id="template-objects">
+    <h3>Template Objects</h3>
+
+    <p class="versionchanged">
+      <span class="versionmodified">Changed in version 2.4.</span></p>
+
+    <p>If a template object was passed to the template context you can
+      extend from that object as well. Assuming the calling code passes
+      a layout template as <em>layout_template</em> to the environment, this
+      code works:</p>
+
+    <div class="highlight">
+      <pre><code>{% extends layout_template %}
+</code></pre>
+    </div>
+    <p>Previously the <em>layout_template</em> variable had to be a string with
+      the layout template’s filename for this to work.</p>
+  </div>
+</div>
+<div class="section" id="html-escaping">
+  <h2>HTML Escaping</h2>
+
+  <p>When generating HTML from templates, there’s always a risk that a variable will
+    include characters that affect the resulting HTML. There are two approaches:
+    manually escaping each variable or automatically escaping everything by default.</p>
+
+  <p>Jinja supports both, but what is used depends on the application configuration.
+    The default configuaration is no automatic escaping for various reasons:</p>
+  <ul class="simple">
+    <li>escaping everything except of safe values will also mean that Jinja is
+      escaping variables known to not include HTML such as numbers which is
+      a huge performance hit.
+    </li>
+    <li>The information about the safety of a variable is very fragile. It could
+      happen that by coercing safe and unsafe values the return value is double
+      escaped HTML.
+    </li>
+  </ul>
+  <div class="section" id="working-with-manual-escaping">
+    <h3>Working with Manual Escaping</h3>
+
+    <p>If manual escaping is enabled it’s <strong>your</strong> responsibility to escape
+      variables if needed. What to escape? If you have a variable that <em>may</em>
+      include any of the following chars () you
+      <strong>have to</strong> escape it unless the variable contains well-formed and trusted
+      HTML. Escaping works by piping the variable through the <code>|e</code> filter:
+      <code>{{</code> <code>user.username|e</code> <code>}}</code>.</p>
+  </div>
+  <div class="section" id="working-with-automatic-escaping">
+    <h3>Working with Automatic Escaping</h3>
+
+    <p>When automatic escaping is enabled everything is escaped by default except
+      for values explicitly marked as safe. Those can either be marked by the
+      application or in the template by using the <em>|safe</em> filter. The main
+      problem with this approach is that Python itself doesn’t have the concept
+      of tainted values so the information if a value is safe or unsafe can get
+      lost. If the information is lost escaping will take place which means that
+      you could end up with double escaped contents.</p>
+
+    <p>Double escaping is easy to avoid however, just rely on the tools Jinja2
+      provides and don’t use builtin Python constructs such as the string modulo
+      operator.</p>
+
+    <p>Functions returning template data (macros, <em>super</em>, <em>self.BLOCKNAME</em>) return
+      safe markup always.</p>
+
+    <p>String literals in templates with automatic escaping are considered unsafe
+      too. The reason for this is that the safe string is an extension to Python
+      and not every library will work properly with it.</p>
+  </div>
+</div>
+<div class="section" id="list-of-control-structures">
+<h2>List of Control Structures</h2>
+
+<p>A control structure refers to all those things that control the flow of a
+  program - conditionals (i.e. if/elif/else), for-loops, as well as things like
+  macros and blocks. Control structures appear inside <code>{%</code> <code>...</code> <code>%}</code> blocks
+  in the default syntax.</p>
+
+<div class="section" id="for">
+  <h3>For</h3>
+
+  <p>Loop over each item in a sequence. For example, to display a list of users
+    provided in a variable called <em>users</em>:</p>
+
+  <div class="highlight">
+    <pre><code>&lt;h1&gt;Members&lt;/h1&gt;
+&lt;ul&gt;
+{% for user in users %}
+  &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+  </div>
+  <p>Inside of a for loop block you can access some special variables:</p>
+  <table border="1" class="docutils">
+    <colgroup>
+      <col width="31%">
+      <col width="69%">
+    </colgroup>
+    <thead valign="bottom">
+    <tr class="row-odd">
+      <th class="head">Variable</th>
+      <th class="head">Description</th>
+    </tr>
+    </thead>
+    <tbody valign="top">
+    <tr class="row-even">
+      <td><em>loop.index</em></td>
+      <td>The current iteration of the loop. (1 indexed)</td>
+    </tr>
+    <tr class="row-odd">
+      <td><em>loop.index0</em></td>
+      <td>The current iteration of the loop. (0 indexed)</td>
+    </tr>
+    <tr class="row-even">
+      <td><em>loop.revindex</em></td>
+      <td>The number of iterations from the end of the loop
+        (1 indexed)
+      </td>
+    </tr>
+    <tr class="row-odd">
+      <td><em>loop.revindex0</em></td>
+      <td>The number of iterations from the end of the loop
+        (0 indexed)
+      </td>
+    </tr>
+    <tr class="row-even">
+      <td><em>loop.first</em></td>
+      <td>True if first iteration.</td>
+    </tr>
+    <tr class="row-odd">
+      <td><em>loop.last</em></td>
+      <td>True if last iteration.</td>
+    </tr>
+    <tr class="row-even">
+      <td><em>loop.length</em></td>
+      <td>The number of items in the sequence.</td>
+    </tr>
+    <tr class="row-odd">
+      <td><em>loop.cycle</em></td>
+      <td>A helper function to cycle between a list of
+        sequences. See the explanation below.
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <p>Within a for-loop, it’s possible to cycle among a list of strings/variables
+    each time through the loop by using the special <em>loop.cycle</em> helper:</p>
+
+  <div class="highlight">
+    <pre><code>{% for row in rows %}
+    &lt;li class="{{ loop.cycle('odd', 'even') }}"&gt;{{ row }}&lt;/li&gt;
+{% endfor %}
+</code></pre>
+  </div>
+  <p>With Jinja 2.1 an extra <em>cycle</em> helper exists that allows loop-unbound
+    cycling. For more information have a look at the <a class="reference internal" href="#builtin-globals"><em>List of
+      Global Functions</em></a>.</p>
+
+  <p id="loop-filtering">Unlike in Python it’s not possible to <em>break</em> or <em>continue</em> in a loop.
+    You
+    can however filter the sequence during iteration which allows you to skip
+    items. The following example skips all the users which are hidden:</p>
+
+  <div class="highlight">
+    <pre><code>{% for user in users if not user.hidden %}
+    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+{% endfor %}
+</code></pre>
+  </div>
+  <p>The advantage is that the special <em>loop</em> variable will count correctly thus
+    not counting the users not iterated over.</p>
+
+  <p>If no iteration took place because the sequence was empty or the filtering
+    removed all the items from the sequence you can render a replacement block
+    by using <em>else</em>:</p>
+
+  <div class="highlight">
+    <pre><code>&lt;ul&gt;
+{% for user in users %}
+    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+{% else %}
+    &lt;li&gt;&lt;em&gt;no users found&lt;/em&gt;&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+  </div>
+  <p>It is also possible to use loops recursively. This is useful if you are
+    dealing with recursive data such as sitemaps. To use loops recursively you
+    basically have to add the <em>recursive</em> modifier to the loop definition and
+    call the <em>loop</em> variable with the new iterable where you want to recurse.</p>
+
+  <p>The following example implements a sitemap with recursive loops:</p>
+
+  <div class="highlight">
+    <pre><code>&lt;ul class="sitemap"&gt;
+{% for item in sitemap recursive %}
+    &lt;li&gt;&lt;a href="{{ item.href|e }}"&gt;{{ item.title }}&lt;/a&gt;
+    {% if item.children %}
+        &lt;ul class="submenu"&gt;{{ loop(item.children) }}&lt;/ul&gt;
+    {% endif %}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+  </div>
+</div>
+<div class="section" id="if">
+  <h3>If</h3>
+
+  <p>The <em>if</em> statement in Jinja is comparable with the if statements of Python.
+    In the simplest form you can use it to test if a variable is defined, not
+    empty or not false:</p>
+
+  <div class="highlight">
+    <pre><code>{% if users %}
+&lt;ul&gt;
+{% for user in users %}
+    &lt;li&gt;{{ user.username|e }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+{% endif %}
+</code></pre>
+  </div>
+  <p>For multiple branches <em>elif</em> and <em>else</em> can be used like in Python. You can
+    use more complex <a class="reference internal" href="#expressions"><em>Expressions</em></a> there too:</p>
+
+  <div class="highlight">
+    <pre><code>{% if kenny.sick %}
+    Kenny is sick.
+{% elif kenny.dead %}
+    You killed Kenny!  You bastard!!!
+{% else %}
+    Kenny looks okay --- so far
+{% endif %}
+</code></pre>
+  </div>
+  <p>If can also be used as <a class="reference internal" href="#if-expression"><em>inline expression</em></a> and for
+    <a class="reference internal" href="#loop-filtering"><em>loop filtering</em></a>.</p>
+</div>
+<div class="section" id="macros">
+  <h3>Macros</h3>
+
+  <p>Macros are comparable with functions in regular programming languages. They
+    are useful to put often used idioms into reusable functions to not repeat
+    yourself.</p>
+
+  <p>Here a small example of a macro that renders a form element:</p>
+
+  <div class="highlight">
+    <pre><code>{% macro input(name, value='', type='text', size=20) %}
+    &lt;input type="{{ type }}" name="{{ name }}" value="{{
+        value|e }}" size="{{ size }}"&gt;
+{% endmacro %}
+</code></pre>
+  </div>
+  <p>The macro can then be called like a function in the namespace:</p>
+
+  <div class="highlight">
+    <pre><code>&lt;p&gt;{{ input('username') }}&lt;/p&gt;
+&lt;p&gt;{{ input('password', type='password') }}&lt;/p&gt;
+</code></pre>
+  </div>
+  <p>If the macro was defined in a different template you have to
+    <a class="reference internal" href="#import"><em>import</em></a> it first.</p>
+
+  <p>Inside macros you have access to three special variables:</p>
+  <dl class="docutils">
+    <dt><em>varargs</em></dt>
+    <dd>If more positional arguments are passed to the macro than accepted by the
+      macro they end up in the special <em>varargs</em> variable as list of values.
+    </dd>
+    <dt><em>kwargs</em></dt>
+    <dd>Like <em>varargs</em> but for keyword arguments. All unconsumed keyword
+      arguments are stored in this special variable.
+    </dd>
+    <dt><em>caller</em></dt>
+    <dd>If the macro was called from a <a class="reference internal" href="#call"><em>call</em></a> tag the caller is
+      stored
+      in this variable as macro which can be called.
+    </dd>
+  </dl>
+  <p>Macros also expose some of their internal details. The following attributes
+    are available on a macro object:</p>
+  <dl class="docutils">
+    <dt><em>name</em></dt>
+    <dd>The name of the macro. <code>{{</code> <code>input.name</code> <code>}}</code> will print <code>input</code>.
+    </dd>
+    <dt><em>arguments</em></dt>
+    <dd>A tuple of the names of arguments the macro accepts.</dd>
+    <dt><em>defaults</em></dt>
+    <dd>A tuple of default values.</dd>
+    <dt><em>catch_kwargs</em></dt>
+    <dd>This is <em>true</em> if the macro accepts extra keyword arguments (ie: accesses
+      the special <em>kwargs</em> variable).
+    </dd>
+    <dt><em>catch_varargs</em></dt>
+    <dd>This is <em>true</em> if the macro accepts extra positional arguments (ie:
+      accesses the special <em>varargs</em> variable).
+    </dd>
+    <dt><em>caller</em></dt>
+    <dd>This is <em>true</em> if the macro accesses the special <em>caller</em> variable and may
+      be called from a <a class="reference internal" href="#call"><em>call</em></a> tag.
+    </dd>
+  </dl>
+  <p>If a macro name starts with an underscore it’s not exported and can’t
+    be imported.</p>
+</div>
+<div class="section" id="call">
+  <h3>Call</h3>
+
+  <p>In some cases it can be useful to pass a macro to another macro. For this
+    purpose you can use the special <em>call</em> block. The following example shows
+    a macro that takes advantage of the call functionality and how it can be
+    used:</p>
+
+  <div class="highlight">
+    <pre><code>{% macro render_dialog(title, class='dialog') %}
+    &lt;div class="{{ class }}"&gt;
+        &lt;h2&gt;{{ title }}&lt;/h2&gt;
+        &lt;div class="contents"&gt;
+            {{ caller() }}
+        &lt;/div&gt;
+    &lt;/div&gt;
+{% endmacro %}
+
+{% call render_dialog('Hello World') %}
+    This is a simple dialog rendered by using a macro and
+    a call block.
+{% endcall %}
+</code></pre>
+  </div>
+  <p>It’s also possible to pass arguments back to the call block. This makes it
+    useful as replacement for loops. Generally speaking a call block works
+    exactly like an macro, just that it doesn’t have a name.</p>
+
+  <p>Here an example of how a call block can be used with arguments:</p>
+
+  <div class="highlight">
+    <pre><code>{% macro dump_users(users) %}
+    &lt;ul&gt;
+    {% for user in users %}
+        &lt;li&gt;&lt;p&gt;{{ user.username|e }}&lt;/p&gt;{{ caller(user) }}&lt;/li&gt;
+    {% endfor %}
+    &lt;/ul&gt;
+{% endmacro %}
+
+{% call(user) dump_users(list_of_user) %}
+    &lt;dl&gt;
+        &lt;dl&gt;Realname&lt;/dl&gt;
+        &lt;dd&gt;{{ user.realname|e }}&lt;/dd&gt;
+        &lt;dl&gt;Description&lt;/dl&gt;
+        &lt;dd&gt;{{ user.description }}&lt;/dd&gt;
+    &lt;/dl&gt;
+{% endcall %}
+</code></pre>
+  </div>
+</div>
+<div class="section" id="id7">
+  <h3>Filters</h3>
+
+  <p>Filter sections allow you to apply regular Jinja2 filters on a block of
+    template data. Just wrap the code in the special <em>filter</em> section:</p>
+
+  <div class="highlight">
+    <pre><code>{% filter upper %}
+    This text becomes uppercase
+{% endfilter %}
+</code></pre>
+  </div>
+</div>
+<div class="section" id="assignments">
+  <h3>Assignments</h3>
+
+  <p>Inside code blocks you can also assign values to variables. Assignments at
+    top level (outside of blocks, macros or loops) are exported from the template
+    like top level macros and can be imported by other templates.</p>
+
+  <p>Assignments use the <em>set</em> tag and can have multiple targets:</p>
+
+  <div class="highlight">
+    <pre><code>{% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
+{% set key, value = call_something() %}
+</code></pre>
+  </div>
+</div>
+<div class="section" id="extends">
+  <h3>Extends</h3>
+
+  <p>The <em>extends</em> tag can be used to extend a template from another one. You
+    can have multiple of them in a file but only one of them may be executed
+    at the time. See the section about <a class="reference internal" href="#template-inheritance"><em>Template
+      Inheritance</em></a> above.</p>
+</div>
+<div class="section" id="block">
+  <h3>Block</h3>
+
+  <p>Blocks are used for inheritance and act as placeholders and replacements
+    at the same time. They are documented in detail as part of the section
+    about <a class="reference internal" href="#template-inheritance"><em>Template Inheritance</em></a>.</p>
+</div>
+<div class="section" id="include">
+  <h3>Include</h3>
+
+  <p>The <em>include</em> statement is useful to include a template and return the
+    rendered contents of that file into the current namespace:</p>
+
+  <div class="highlight">
+    <pre><code>{% include 'header.html' %}
+    Body
+{% include 'footer.html' %}
+</code></pre>
+  </div>
+  <p>Included templates have access to the variables of the active context by
+    default. For more details about context behavior of imports and includes
+    see <a class="reference internal" href="#import-visibility"><em>Import Context Behavior</em></a>.</p>
+
+  <p>From Jinja 2.2 onwards you can mark an include with <tt class="docutils literal"><code>ignore</code>
+    <code>missing</code></tt> in
+    which case Jinja will ignore the statement if the template to be ignored
+    does not exist. When combined with <code>with</code> or <code>without</code> <code>context</code> it has
+    to be placed <em>before</em> the context visibility statement. Here some valid
+    examples:</p>
+
+  <div class="highlight">
+    <pre><code>{% include "sidebar.html" ignore missing %}
+{% include "sidebar.html" ignore missing with context %}
+{% include "sidebar.html" ignore missing without context %}
+</code></pre>
+  </div>
+  <p class="versionadded">
+    <span class="versionmodified">New in version 2.2.</span></p>
+
+  <p>You can also provide a list of templates that are checked for existence
+    before inclusion. The first template that exists will be included. If
+    <em>ignore missing</em> is given, it will fall back to rendering nothing if
+    none of the templates exist, otherwise it will raise an exception.</p>
+
+  <p>Example:</p>
+
+  <div class="highlight">
+    <pre><code>{% include ['page_detailed.html', 'page.html'] %}
+{% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
+</code></pre>
+  </div>
+  <p class="versionchanged">
+    <span class="versionmodified">Changed in version 2.4: </span>If a template object was passed to the template context
+    you can
+    include that object using <em>include</em>.</p>
+</div>
+<div class="section" id="import">
+  <h3>Import</h3>
+
+  <p>Jinja2 supports putting often used code into macros. These macros can go into
+    different templates and get imported from there. This works similar to the
+    import statements in Python. It’s important to know that imports are cached
+    and imported templates don’t have access to the current template variables,
+    just the globals by defualt. For more details about context behavior of
+    imports and includes see <a class="reference internal" href="#import-visibility"><em>Import Context
+      Behavior</em></a>.</p>
+
+  <p>There are two ways to import templates. You can import the complete template
+    into a variable or request specific macros / exported variables from it.</p>
+
+  <p>Imagine we have a helper module that renders forms (called <em>forms.html</em>):</p>
+
+  <div class="highlight">
+    <pre><code>{% macro input(name, value='', type='text') %}
+    &lt;input type="{{ type }}" value="{{ value|e }}" name="{{ name }}"&gt;
+{% endmacro %}
+
+{% macro textarea(name, value='', rows=10, cols=40) %}
+    &lt;textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
+        }}"&gt;{{ value|e }}&lt;/textarea&gt;
+{% endmacro %}
+</code></pre>
+  </div>
+  <p>The easiest and most flexible is importing the whole module into a variable.
+    That way you can access the attributes:</p>
+
+  <div class="highlight">
+    <pre><code>{% import 'forms.html' as forms %}
+&lt;dl&gt;
+    &lt;dt&gt;Username&lt;/dt&gt;
+    &lt;dd&gt;{{ forms.input('username') }}&lt;/dd&gt;
+    &lt;dt&gt;Password&lt;/dt&gt;
+    &lt;dd&gt;{{ forms.input('password', type='password') }}&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;p&gt;{{ forms.textarea('comment') }}&lt;/p&gt;
+</code></pre>
+  </div>
+  <p>Alternatively you can import names from the template into the current
+    namespace:</p>
+
+  <div class="highlight">
+    <pre><code>{% from 'forms.html' import input as input_field, textarea %}
+&lt;dl&gt;
+    &lt;dt&gt;Username&lt;/dt&gt;
+    &lt;dd&gt;{{ input_field('username') }}&lt;/dd&gt;
+    &lt;dt&gt;Password&lt;/dt&gt;
+    &lt;dd&gt;{{ input_field('password', type='password') }}&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;p&gt;{{ textarea('comment') }}&lt;/p&gt;
+</code></pre>
+  </div>
+  <p>Macros and variables starting with one ore more underscores are private and
+    cannot be imported.</p>
+
+  <p class="versionchanged">
+    <span class="versionmodified">Changed in version 2.4: </span>If a template object was passed to the template context
+    you can
+    import from that object.</p>
+</div>
+</div>
+<div class="section" id="import-context-behavior">
+  <h2>Import Context Behavior</h2>
+
+  <p>Per default included templates are passed the current context and imported
+    templates not. The reason for this is that imports unlike includes are
+    cached as imports are often used just as a module that holds macros.</p>
+
+  <p>This however can be changed of course explicitly. By adding <em>with context</em>
+    or <em>without context</em> to the import/include directive the current context
+    can be passed to the template and caching is disabled automatically.</p>
+
+  <p>Here two examples:</p>
+
+  <div class="highlight">
+    <pre><code>{% from 'forms.html' import input with context %}
+{% include 'header.html' without context %}
+</code></pre>
+  </div>
+  <div class="admonition-note admonition ">
+    <p class="first admonition-title">Note</p>
+
+    <p>In Jinja 2.0 the context that was passed to the included template
+      did not include variables defined in the template. As a matter of
+      fact this did not work:</p>
+
+    <div class="highlight">
+      <pre><code>{% for box in boxes %}
+    {% include "render_box.html" %}
+{% endfor %}
+</code></pre>
+    </div>
+    <p class="last">The included template <code>render_box.html</code> is
+      <em>not</em> able to access
+      <em>box</em> in Jinja 2.0. As of Jinja 2.1 <code>render_box.html</code> <em>is</em> able
+      to do so.</p>
+  </div>
+</div>
+<div class="section" id="expressions">
+
+  <h2>Expressions</h2>
+
+  <p>Jinja allows basic expressions everywhere. These work very similar to regular
+    Python and even if you’re not working with Python you should feel comfortable
+    with it.</p>
+
+  <div class="section" id="literals">
+    <h3>Literals</h3>
+
+    <p>The simplest form of expressions are literals. Literals are representations
+      for Python objects such as strings and numbers. The following literals exist:</p>
+    <dl class="docutils">
+      <dt>“Hello World”:</dt>
+      <dd>Everything between two double or single quotes is a string. They are
+        useful whenever you need a string in the template (for example as
+        arguments to function calls, filters or just to extend or include a
+        template).
+      </dd>
+      <dt>42 / 42.23:</dt>
+      <dd>Integers and floating point numbers are created by just writing the
+        number down. If a dot is present the number is a float, otherwise an
+        integer. Keep in mind that for Python <code>42</code> and <code>42.0</code> is something
+        different.
+      </dd>
+      <dt>[‘list’, ‘of’, ‘objects’]:</dt>
+      <dd><p class="first">Everything between two brackets is a list. Lists are useful to store
+        sequential data in or to iterate over them. For example you can easily
+        create a list of links using lists and tuples with a for loop:</p>
+
+        <div class="last highlight">
+          <pre><code>&lt;ul&gt;
+{% for href, caption in [('index.html', 'Index'), ('about.html', 'About'),
+                         ('downloads.html', 'Downloads')] %}
+    &lt;li&gt;&lt;a href="{{ href }}"&gt;{{ caption }}&lt;/a&gt;&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+        </div>
+      </dd>
+      <dt>(‘tuple’, ‘of’, ‘values’):</dt>
+      <dd>Tuples are like lists, just that you can’t modify them. If the tuple
+        only has one item you have to end it with a comma. Tuples are usually
+        used to represent items of two or more elements. See the example above
+        for more details.
+      </dd>
+      <dt>{‘dict’: ‘of’, ‘key’: ‘and’, ‘value’: ‘pairs’}:</dt>
+      <dd>A dict in Python is a structure that combines keys and values. Keys must
+        be unique and always have exactly one value. Dicts are rarely used in
+        templates, they are useful in some rare cases such as the <a class="reference internal" href="#xmlattr"
+                                                                     title="xmlattr"><code>xmlattr()</code></a>
+        filter.
+      </dd>
+      <dt>true / false:</dt>
+      <dd>true is always true and false is always false.</dd>
+    </dl>
+    <div class="admonition-note admonition ">
+      <p class="first admonition-title">Note</p>
+
+      <p class="last">The special constants <em>true</em>, <em>false</em> and <em>none</em> are indeed
+        lowercase.
+        Because that caused confusion in the past, when writing <em>True</em> expands
+        to an undefined variable that is considered false, all three of them can
+        be written in title case too (<em>True</em>, <em>False</em>, and <em>None</em>). However for
+        consistency (all Jinja identifiers are lowercase) you should use the
+        lowercase versions.</p>
+    </div>
+  </div>
+  <div class="section" id="math">
+    <h3>Math</h3>
+
+    <p>Jinja allows you to calculate with values. This is rarely useful in templates
+      but exists for completeness’ sake. The following operators are supported:</p>
+    <dl class="docutils">
+      <dt>+</dt>
+      <dd>Adds two objects together. Usually the objects are numbers but if both are
+        strings or lists you can concatenate them this way. This however is not
+        the preferred way to concatenate strings! For string concatenation have
+        a look at the <code>~</code> operator. <tt
+            class="docutils literal"><code>{{</code> <code>1</code> <code>+</code>
+          <code>1</code> <code>}}</code></tt> is <code>2</code>.
+      </dd>
+      <dt>-</dt>
+      <dd>Substract the second number from the first one. <code>{{</code> <code>3</code> <code>-</code> <code>2</code> <code>}}</code> is
+        <code>1</code>.
+      </dd>
+    </dl>
+    <dl class="docutils">
+      <dt>/</dt>
+      <dd>Divide two numbers. The return value will be a floating point number.
+        <tt class="docutils literal"><code>{{</code> <code>1</code> <code>/</code>
+          <code>2</code> <code>}}</code></tt> is <tt class="docutils literal"><code>{{</code>
+          <code>0.5</code> <code>}}</code></tt>.
+      </dd>
+    </dl>
+    <dl class="docutils">
+      <dt>//</dt>
+      <dd>Divide two numbers and return the truncated integer result.
+        <tt class="docutils literal"><code>{{</code> <code>20</code> <code>//</code>
+          <code>7</code> <code>}}</code></tt> is <code>2</code>.
+      </dd>
+    </dl>
+    <dl class="docutils">
+      <dt>%</dt>
+      <dd>Calculate the remainder of an integer division. <code>{{</code> <code>11</code> <code>%</code> <code>7</code> <code>}}</code>
+        is <code>4</code>.
+      </dd>
+      <dt>*</dt>
+      <dd>Multiply the left operand with the right one. <code>{{</code> <code>2</code> <code>*</code> <code>2</code> <code>}}</code>
+        would
+        return <code>4</code>. This can also be used to repeat a string
+        multiple times.
+        <tt class="docutils literal"><code>{{</code> <code>'='</code> <code>*</code>
+          <code>80</code> <code>}}</code></tt> would print a bar of 80 equal signs.
+      </dd>
+      <dt>**</dt>
+      <dd>Raise the left operand to the power of the right operand. <code>{{</code> <code>2**3</code> <code>}}</code>
+        would return <code>8</code>.
+      </dd>
+    </dl>
+  </div>
+  <div class="section" id="comparisons">
+    <h3>Comparisons</h3>
+    <dl class="docutils">
+      <dt>==</dt>
+      <dd>Compares two objects for equality.</dd>
+      <dt>!=</dt>
+      <dd>Compares two objects for inequality.</dd>
+    </dl>
+    <dl class="docutils">
+      <dt>&gt;</dt>
+      <dd><em>true</em> if the left hand side is greater than the right hand side.</dd>
+      <dt>&gt;=</dt>
+      <dd><em>true</em> if the left hand side is greater or equal to the right hand side.</dd>
+    </dl>
+    <dl class="docutils">
+      <dt>&lt;</dt>
+      <dd><em>true</em> if the left hand side is lower than the right hand side.</dd>
+      <dt>&lt;=</dt>
+      <dd><em>true</em> if the left hand side is lower or equal to the right hand side.</dd>
+    </dl>
+  </div>
+  <div class="section" id="logic">
+    <h3>Logic</h3>
+
+    <p>For <em>if</em> statements, <em>for</em> filtering or <em>if</em> expressions it can be useful to
+      combine multiple expressions:</p>
+    <dl class="docutils">
+      <dt>and</dt>
+      <dd>Return true if the left and the right operand is true.</dd>
+      <dt>or</dt>
+      <dd>Return true if the left or the right operand is true.</dd>
+      <dt>not</dt>
+      <dd>negate a statement (see below).</dd>
+      <dt>(expr)</dt>
+      <dd>group an expression.</dd>
+    </dl>
+    <div class="admonition-note admonition ">
+      <p class="first admonition-title">Note</p>
+
+      <p class="last">The <code>is</code> and <code>in</code> operators support negation using an infix notation
+        too: <code>foo</code> <code>is</code> <code>not</code> <code>bar</code> and <tt class="docutils literal"><code>foo</code>
+          <code>not</code> <code>in</code> <code>bar</code></tt> instead of <code>not</code> <code>foo</code> <code>is</code> <code>bar</code>
+        and <code>not</code> <code>foo</code> <code>in</code> <code>bar</code>. All other expressions require a prefix notation:
+        <code>not</code> <code>(foo</code> <code>and</code> <code>bar).</code></p>
+    </div>
+  </div>
+  <div class="section" id="other-operators">
+    <h3>Other Operators</h3>
+
+    <p>The following operators are very useful but don’t fit into any of the other
+      two categories:</p>
+    <dl class="docutils">
+      <dt>in</dt>
+      <dd>Perform sequence / mapping containment test. Returns true if the left
+        operand is contained in the right. <tt class="docutils literal"><code>{{</code> <code>1</code> <code>in</code> <code>[1,</code> <code>2,</code>
+          <code>3]</code> <code>}}</code></tt> would for
+        example return true.
+      </dd>
+      <dt>is</dt>
+      <dd>Performs a <a class="reference internal" href="#tests"><em>test</em></a>.</dd>
+      <dt>|</dt>
+      <dd>Applies a <a class="reference internal" href="#filters"><em>filter</em></a>.</dd>
+    </dl>
+    <dl class="docutils">
+      <dt>~</dt>
+      <dd>Converts all operands into strings and concatenates them.
+        <tt class="docutils literal"><code>{{</code> <code>"Hello</code> <code>"</code> <code>~</code> <code>name</code> <code>~</code>
+          <code>"!"</code> <code>}}</code></tt> would return (assuming <em>name</em> is
+        <code>'John'</code>) <code>Hello</code> <code>John!</code>.
+      </dd>
+      <dt>()</dt>
+      <dd>Call a callable: <code>{{</code> <code>post.render()</code> <code>}}</code>. Inside of the parentheses you
+        can use positional arguments and keyword arguments like in python:
+        <code>{{</code> <code>post.render(user,</code> <code>full=true)</code> <code>}}</code>.
+      </dd>
+      <dt>. / []</dt>
+      <dd>Get an attribute of an object. (See <a class="reference internal" href="#variables"><em>Variables</em></a>)
+      </dd>
+    </dl>
+  </div>
+  <div class="section" id="if-expression">
+    <h3>If Expression</h3>
+
+    <p>It is also possible to use inline <em>if</em> expressions. These are useful in some
+      situations. For example you can use this to extend from one template if a
+      variable is defined, otherwise from the default layout template:</p>
+
+    <div class="highlight">
+      <pre><code>{% extends layout_template if layout_template is defined else 'master.html' %}
+</code></pre>
+    </div>
+    <p>The general syntax is <tt class="docutils literal"><code>&lt;do</code> <code>something&gt;</code>
+      <code>if</code> <code>&lt;something</code> <code>is</code> <code>true&gt;</code>
+      <code>else</code> <code>&lt;do</code>
+      <code>something</code> <code>else&gt;</code></tt>.</p>
+
+    <p>The <em>else</em> part is optional. If not provided the else block implicitly
+      evaluates into an undefined object:</p>
+
+    <div class="highlight">
+      <pre><code>{{ '[%s]' % page.title if page.title }}
+</code></pre>
+    </div>
+  </div>
+</div>
