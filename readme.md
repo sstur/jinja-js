@@ -1,15 +1,11 @@
 #JavaScript templating engine based on Jinja2
 
 Jinja is one of the most used template engines for Python. This project is a JavaScript implementation with emphasis
-on simplicity and performance, compiling templates into readable JavaScript that minifies well. It is designed to run
-on Node or in the browser and weighs in around 2.8K (min + gzip).
+on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed
+to run on Node or in the [browser][demo] and weighs in around 2.8K (min + gzip).
 
 Jinja was inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig].
 They all have similar syntax for rendering variables, looping and filtering.
-
-[django]: http://docs.djangoproject.com/en/dev/ref/templates/builtins/
-[liquid]: http://liquidmarkup.org/
-[twig]: http://twig.sensiolabs.org/
 
 Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
@@ -23,6 +19,8 @@ Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
   </ul>
 {% endblock %}
 ```
+
+[View Online Demo][demo]
 
 ##Features
 
@@ -49,8 +47,6 @@ Note:
  - filter arguments can only be literals
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
 
-[jinjadocs]: http://jinja.pocoo.org/docs/templates/
-
 ##Test Coverage
 
 The tests use Mocha and were adapted from another excellent [project][swig].
@@ -59,10 +55,15 @@ The tests use Mocha and were adapted from another excellent [project][swig].
 
 There are several existing JavaScript implementations of the Jinja family of templating languages, many of which have
 different objectives than this project and may be suitable for some projects but not others. Some worth mentioning
-include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquid].
+include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquidjs].
 
+[demo]: http://sstur.com/jinja/demo/
+[django]: http://docs.djangoproject.com/en/dev/ref/templates/builtins/
+[liquid]: http://liquidmarkup.org/
+[twig]: http://twig.sensiolabs.org/
+[jinjadocs]: http://jinja.pocoo.org/docs/templates/
 [nunjucks]: http://github.com/jlongster/nunjucks
 [swig]: http://github.com/paularmstrong/swig
 [jinjs]: http://github.com/ravelsoft/node-jinjs
 [plate]: http://github.com/chrisdickinson/plate
-[liquid]: http://github.com/darthapo/liquid.js
+[liquidjs]: http://github.com/darthapo/liquid.js

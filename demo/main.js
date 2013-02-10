@@ -8,7 +8,7 @@ jQuery(function($) {
     indent_size: 2
   };
 
-  var initSrc = removeLeadingLinebreaks($('#example-src').html() || '');
+  var initSrc = trimLinebreaks($('#example-src').html() || '');
   $jinja.val(initSrc);
 
   var input = CodeMirror.fromTextArea($jinja.get(0), {
@@ -52,8 +52,8 @@ jQuery(function($) {
     output.setValue(src);
   }
 
-  function removeLeadingLinebreaks(src) {
-    return src.replace(/^[\r\n]+/, '');
+  function trimLinebreaks(src) {
+    return src.replace(/^[\r\n]+|[\r\n]+$/g, '');
   }
 
   function squashBoilerplate(src) {
