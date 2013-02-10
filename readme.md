@@ -5,7 +5,8 @@ on simplicity and performance, compiling templates into [readable JavaScript][de
 to run on Node or in the [browser][demo] and weighs in around 3K (min + gzip).
 
 Jinja was inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig].
-They all have similar syntax for rendering variables, looping and filtering.
+They all have similar syntax for rendering variables, looping and filtering. This implementation aims to be compatible
+with Jinja2 and Liquid, but Twig is mostly the same also.
 
 Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
