@@ -8,6 +8,12 @@
   var filters = {
     add: function(val, i) {
       return val + i;
+    },
+    split: function(str, sep) {
+      return String(str).split(sep + '');
+    },
+    join: function(arr, sep) {
+      return Array.isArray(arr) ? arr.join(sep + '') : '';
     }
   };
 
@@ -344,11 +350,12 @@
       });
     }
 
-    describe('add', function () {
+    describe('numbers and strings', function () {
       testFilter('add(2)', { v: 1 }, '3', 'add numbers');
       testFilter('add(2)', { v: '1' }, '12', 'string number is not real number');
       testFilter('add(2)', { v: 'foo' }, 'foo2', 'string var turns addend into a string');
       testFilter('add("bar")', { v: 'foo' }, 'foobar', 'strings concatenated');
+      testFilter('split("|")|join(";")', { v: 'a|b|c' }, 'a;b;c', 'string split join');
     });
 
     describe('html', function () {

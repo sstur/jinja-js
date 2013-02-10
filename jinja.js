@@ -107,11 +107,14 @@ var jinja;
   Parser.prototype.tokenHandler = function(tag) {
     if (!tag) return;
     var type = delimeters[tag.slice(0, 2)];
+    tag = tag.slice(2, -2).trim();
     if (type == 'tag') {
-      this.compileTag(tag.slice(2, -2));
+      this.compileTag(tag);
     } else
     if (type == 'output') {
-      var parts = tag.slice(2, -2).split('|');
+      var extracted = this.extractEnt(tag, STRINGS, '@');
+      extracted.src = extracted.src.split('|');
+      var parts = this.injectEnt(extracted, '@');
       if (parts.length > 1) {
         var filters = parts.slice(1).map(this.parseFilter.bind(this));
         this.push('filter(' + this.parseExpr(parts[0]) + ',' + filters.join(',') + ');');
@@ -158,12 +161,15 @@ var jinja;
   };
 
   Parser.prototype.injectEnt = function(extracted, placeholder) {
-    var src = extracted.src, subs = extracted.subs;
+    var src = extracted.src, subs = extracted.subs, isArr = Array.isArray(src);
+    var arr = (isArr) ? src : [src];
     var re = new RegExp('[' + placeholder + ']', 'g'), i = 0;
-    src = src.replace(re, function(_) {
-      return subs[i++];
+    arr.forEach(function(src, index) {
+      arr[index] = src.replace(re, function(_) {
+        return subs[i++];
+      });
     });
-    return src;
+    return isArr ? arr : arr[0];
   };
 
   //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`
