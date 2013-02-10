@@ -9,20 +9,21 @@
 <script src="vendor/beautify.js"></script>
 <script src="vendor/codemirror/lib/codemirror.js"></script>
 <script src="vendor/codemirror/mode/jinja2/jinja2.js"></script>
-  <script src="../jinja.js"></script>
+<script src="vendor/codemirror/mode/javascript/javascript.js"></script>
+<script src="../jinja.js"></script>
 <script src="main.js"></script>
 <script id="example-src" type="text/x-tmpl-jinja">
-<html lang="en">
+<html>
 <head>
   <title>{{ title }}</title>
 </head>
 <body>
-<ul id="navigation">
-  {% for item in navigation %}
+<ul>
+  {% for item in links %}
   <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
   {% endfor %}
 </ul>
-<p>{{ text }}</p>
+<p>{{ intro }}</p>
 </body>
 </html>
 </script>
@@ -30,7 +31,7 @@
 <body>
 <h1>Jinja-JS Demo</h1>
 <p>Template markup (HTML/Jinja) on the left will be compiled to JavaScript and shown on the right.</p>
-<div class="input"><textarea name="nowrap" id="jinja"></textarea></div>
-<div class="output"><pre><code id="output"></code></pre></div>
+<div class="input"><textarea id="jinja"></textarea></div>
+<div class="output"><textarea id="output"></textarea></div>
 </body>
 </html>

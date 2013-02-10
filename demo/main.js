@@ -10,25 +10,31 @@ jQuery(function($) {
 
   var initSrc = removeLeadingLinebreaks($('#example-src').html() || '');
   $jinja.val(initSrc);
-  update(initSrc);
 
-  var editor = CodeMirror.fromTextArea($jinja.get(0), {
+  var input = CodeMirror.fromTextArea($jinja.get(0), {
     tabSize: 2,
     lineNumbers: true,
     autofocus: true,
     mode: {name: "jinja2", htmlMode: true}
   });
 
+  var output = CodeMirror.fromTextArea($output.get(0), {
+    tabSize: 2,
+    lineNumbers: true,
+    mode: {name: "javascript", htmlMode: true}
+  });
+
   var timeout;
-  editor.on('change', function(instance, change) {
-    console.log('change');
+  input.on('change', function(instance, change) {
     clearTimeout(timeout);
     setTimeout(update, 100);
   });
 
+  update();
 
-  function update(val) {
-    var src = (val == null) ? editor.getValue() : val;
+
+  function update() {
+    var src = input.getValue();
     try {
       var fn = jinja.compile(src).render;
     } catch(e) {
@@ -43,7 +49,7 @@ jQuery(function($) {
     src = src.replace(/^ *\/\/[^\n]*\n/gm, '');
     src = js_beautify(src, beautifyOpts);
     src = squashBoilerplate(src);
-    $output.text(src);
+    output.setValue(src);
   }
 
   function removeLeadingLinebreaks(src) {
@@ -57,7 +63,7 @@ jQuery(function($) {
     });
     src = src.replace(/\r *\n/g, '');
     src = src.replace(/;\n\|  var/g, ',');
-    src = src.replace(/^\|  var/gm, '  var');
+    src = src.replace(/\|  var/gm, '  var');
     return src;
   }
 

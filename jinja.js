@@ -358,7 +358,8 @@ var jinja;
       for (var i = 1, len = arguments.length; i < len; i++) {
         var arr = arguments[i], name = arr[0], filter = filters[name];
         if (filter) {
-          arr[0] = val; //now arr looks like [val, arg1, arg2]
+          arr[0] = val;
+          //now arr looks like [val, arg1, arg2]
           val = filter.apply(data, arr);
         } else {
           throw new Error('Invalid filter: ' + name);
