@@ -28,6 +28,7 @@ var jinja;
   }
 })(function(require, jinja) {
   "use strict";
+  var TOKENS = /\{\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}\}|\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}|\{([#%])('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+?\1\}/g;
   //note: $ is not allowed in dot-notation identifiers
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
   var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
@@ -75,29 +76,19 @@ var jinja;
   };
 
   Parser.prototype.tokenize = function(src) {
-    var tagStart, tagEnd, prevEnd = 0, offset = 0;
-    while ((tagStart = src.indexOf('{', prevEnd + offset)) >= 0) {
-      tagEnd = -1;
-      var delim = src.substr(tagStart, 2);
-      if (delim == '{{') {
-        tagEnd = src.indexOf('}}', tagStart + 2);
-      } else
-      if (delim in delimeters) {
-        tagEnd = src.indexOf(delim.charAt(1) + '}', tagStart + 2);
+    var lastEnd = 0, parser = this;
+    src.replace(TOKENS, function(token) {
+      var tagStart = arguments[arguments.length - 2], len = token.length;
+      var text = src.slice(lastEnd, tagStart);
+      parser.textHandler(text);
+      if (token.slice(0, 3) == '{{{') {
+        //liquid-style: make {{{x}}} => {{x|safe}}
+        token = token.slice(1, -3) + '|safe}}';
       }
-      if (tagEnd < 0) {
-        offset ++;
-        continue;
-      }
-      var text = src.slice(prevEnd, tagStart);
-      this.textHandler(text);
-      var tag = src.slice(tagStart, tagEnd + 2);
-      this.tokenHandler(tag);
-      prevEnd = tagEnd + 2;
-      offset = 0;
-    }
-    text = src.slice(prevEnd);
-    this.textHandler(text);
+      parser.tokenHandler(token);
+      lastEnd = tagStart + len;
+    });
+    this.textHandler(src.slice(lastEnd));
   };
 
   Parser.prototype.textHandler = function(text) {

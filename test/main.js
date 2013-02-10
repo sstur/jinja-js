@@ -17,190 +17,23 @@
     }
   };
 
-  describe('Tag: block', function () {
-
-    it('basic', function () {
-      var tpl,
-        extends_base = [
-          'This is from the "extends_base" template.',
-          '',
-          '{% block one %}',
-          '  This is the default content in block `one`',
-          '{% endblock %}',
-          '',
-          '{% block two %}',
-          '  This is the default content in block `two`',
-          '{% endblock %}'
-        ].join('\n'),
-        extends1 = [
-          '{% extends "extends_base" %}',
-          'This is content from "extends_1", you should not see it',
-          '',
-          '{% block one %}',
-          '  This is the "extends_1" content in block `one`',
-          '{% endblock %}'
-        ].join('\n');
-
-      jinja.compile(extends_base, { filename: 'extends_base' });
-      tpl = jinja.compile(extends1, { filename: 'extends1' });
-      expect(tpl({})).to.equal('This is from the "extends_base" template.\n\n\n  This is the "extends_1" content in block `one`\n\n\n\n  This is the default content in block `two`\n');
-    });
-
-    it('can chain extends', function () {
-      var tpl,
-        extends_base = [
-          'This is from the "extends_base" template.',
-          '',
-          '{% block one %}',
-          '  This is the default content in block `one`',
-          '{% endblock %}',
-          '',
-          '{% block two %}',
-          '  This is the default content in block `two`',
-          '{% endblock %}'
-        ].join('\n'),
-        extends1 = [
-          '{% extends "extends_base" %}',
-          'This is content from "extends_1", you should not see it',
-          '',
-          '{% block one %}',
-          '  This is the "extends_1" content in block `one`',
-          '{% endblock %}'
-        ].join('\n'),
-        extends2 = [
-          '{% extends "extends1" %}',
-          'This is content from "extends_2", you should not see it',
-          '',
-          '{% block one %}',
-          '  This is the "extends_2" content in block `one`',
-          '{% endblock %}'
-        ].join('\n');
-
-      jinja.compile(extends_base, { filename: 'extends_base' });
-      jinja.compile(extends1, { filename: 'extends1' });
-      tpl = jinja.compile(extends2, { filename: 'extends2' });
-      expect(tpl({})).to.equal('This is from the "extends_base" template.\n\n\n  This is the "extends_2" content in block `one`\n\n\n\n  This is the default content in block `two`\n');
-    });
-
-  });
-
-  describe('Tag: else', function () {
-
-    it('gets used', function () {
-      var tpl = jinja.compile('{% if foo.length > 1 %}hi!{% else %}nope{% endif %}');
-      expect(tpl({ foo: [1, 2, 3] })).to.equal('hi!');
-      expect(tpl({ foo: [1] })).to.equal('nope');
-    });
-
-    it('throws if used outside of "if" context', function () {
-      var fn = function () {
-        jinja.compile('{% else %}');
-      };
-      expect(fn).to.throwException();
-    });
-
-    describe('elseif', function () {
-      it('works nicely', function () {
-        var tpl = jinja.compile('{% if foo.length > 2 %}foo{% elseif foo.length < 2 %}bar{% endif %}');
-        expect(tpl({ foo: [1, 2, 3] })).to.equal('foo');
-        expect(tpl({ foo: [1, 2] })).to.equal('');
-        expect(tpl({ foo: [1] })).to.equal('bar');
-      });
-
-      it('accepts conditionals', function () {
-        var tpl = jinja.compile('{% if foo %}foo{% elseif bar && baz %}bar{% endif %}');
-        expect(tpl({ bar: true, baz: true })).to.equal('bar');
-      });
-    });
-
-    it('can have multiple elseif and else conditions', function () {
-      var tpl = jinja.compile('{% if foo %}foo{% elseif bar === "bar" %}bar{% elseif baz.length == 2 %}baz{% else %}bop{% endif %}');
-      expect(tpl({ foo: true })).to.equal('foo');
-      expect(tpl({ bar: "bar" })).to.equal('bar');
-      expect(tpl({ baz: [3, 4] })).to.equal('baz');
-      expect(tpl({ baz: [2] })).to.equal('bop');
-      expect(tpl({ bar: false })).to.equal('bop');
-    });
-
-    describe('in "for" tags', function () {
-      it('can be used as fallback', function () {
-        var tpl = jinja.compile('{% for foo in bar %}blah{% else %}hooray!{% endfor %}');
-        expect(tpl({ bar: [] })).to.equal('hooray!');
-        expect(tpl({ bar: {}})).to.equal('hooray!');
-
-        expect(tpl({ bar: [1] })).to.equal('blah');
-        expect(tpl({ bar: { foo: 'foo' }})).to.equal('blah');
-      });
-
-      it('throws if using "elseif"', function () {
-        var fn = function () {
-          jinja.compile('{% for foo in bar %}hi!{% elseif blah %}nope{% endfor %}');
-        };
-        expect(fn).to.throwException();
-      });
-    });
-  });
-
-  //describe('Tag: extends', function () {
-  //
-  //  it('throws on circular references', function () {
-  //    var circular1 = "{% extends 'extends_circular2.html' %}{% block content %}Foobar{% endblock %}",
-  //      circular2 = "{% extends 'extends_circular1.html' %}{% block content %}Barfoo{% endblock %}",
-  //      fn = function () {
-  //        jinja.compile(circular1, { filename: 'extends_circular1.html' });
-  //        jinja.compile(circular2, { filename: 'extends_circular2.html' })();
-  //      };
-  //    expect(fn).to.throwException();
-  //  });
-  //
-  //  it('throws if not first tag', function () {
-  //    var fn = function () {
-  //      jinja.compile('asdf {% extends foo %}')();
-  //    };
-  //    expect(fn).to.throwException();
-  //  });
-  //});
-
-  describe('Tag: for', function () {
-
-    var tpl = jinja.compile('{% for foo in bar %}{{ foo }}, {% endfor %}');
-    it('loops arrays', function () {
-      expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('foo, bar, baz, ');
-    });
-
-    it('loops objects', function () {
-      expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('baz, pow, foo, ');
-    });
-
-    describe('loop object', function () {
-      it('index0', function () {
-        var tpl = jinja.compile('{% for foo in bar %}[{{ loop.index0 }}, {{ foo }}]{% endfor %}');
-        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('[0, foo][1, bar][2, baz]');
-        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('[0, baz][1, pow][2, foo]');
-      });
-
-      it('context', function () {
-        var inner = jinja.compile('{{ f }}', { filename: "inner" }),
-          tpl = jinja.compile('{{ f }}{% for f in bar %}{{ f }}{% include "inner" %}{{ f }}{% endfor %}{{ f }}');
-        expect(tpl({ f: 'z', bar: ['a'] })).to.equal('zaaaz');
-        expect(tpl({ bar: ['a'] })).to.equal('aaa');
-      });
-
-      it('index', function () {
-        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index }}{% endfor %}');
-        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('123');
-        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('123');
-      });
-
-      it('index0', function () {
-        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index0 }}{% endfor %}');
-        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('012');
-        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('012');
-      });
-
-    });
-
-  });
+//  describe('Values and Literals', function () {
+//
+//    it('tests string literals', function () {
+//      var tpl = jinja.compile('{{ "abc" }}');
+//      expect(tpl({})).to.equal('abc');
+//
+//      tpl = jinja.compile("{{ 'abc' }}");
+//      expect(tpl({})).to.equal('abc');
+//
+//      tpl = jinja.compile('{{{ "a>c" }}}');
+//      expect(tpl({})).to.equal('a>c');
+//
+//      tpl = jinja.compile("{{ '}}' }}");
+//      expect(tpl({})).to.equal('}}');
+//    });
+//
+//  });
 
   describe('Tag: if', function () {
 
@@ -285,19 +118,100 @@
 
   });
 
-  describe('Tag: include', function () {
+  describe('Tag: else', function () {
 
-    it('includes the given template', function () {
-      jinja.compile('{{array.length}}', { filename: 'included_2.html' });
-      expect(jinja.compile('{% include "included_2.html" %}')({ array: ['foo'] }))
-        .to.equal('1');
+    it('gets used', function () {
+      var tpl = jinja.compile('{% if foo.length > 1 %}hi!{% else %}nope{% endif %}');
+      expect(tpl({ foo: [1, 2, 3] })).to.equal('hi!');
+      expect(tpl({ foo: [1] })).to.equal('nope');
     });
 
-    it('includes from parent templates', function () {
-      jinja.compile('foobar', { filename: 'foobar' });
-      jinja.compile('{% include "foobar" %}', { filename: 'parent' });
-      expect(jinja.compile('{% extends "parent" %}')())
-        .to.equal('foobar');
+    it('throws if used outside of "if" context', function () {
+      var fn = function () {
+        jinja.compile('{% else %}');
+      };
+      expect(fn).to.throwException();
+    });
+
+    describe('elseif', function () {
+      it('works nicely', function () {
+        var tpl = jinja.compile('{% if foo.length > 2 %}foo{% elseif foo.length < 2 %}bar{% endif %}');
+        expect(tpl({ foo: [1, 2, 3] })).to.equal('foo');
+        expect(tpl({ foo: [1, 2] })).to.equal('');
+        expect(tpl({ foo: [1] })).to.equal('bar');
+      });
+
+      it('accepts conditionals', function () {
+        var tpl = jinja.compile('{% if foo %}foo{% elseif bar && baz %}bar{% endif %}');
+        expect(tpl({ bar: true, baz: true })).to.equal('bar');
+      });
+    });
+
+    it('can have multiple elseif and else conditions', function () {
+      var tpl = jinja.compile('{% if foo %}foo{% elseif bar === "bar" %}bar{% elseif baz.length == 2 %}baz{% else %}bop{% endif %}');
+      expect(tpl({ foo: true })).to.equal('foo');
+      expect(tpl({ bar: "bar" })).to.equal('bar');
+      expect(tpl({ baz: [3, 4] })).to.equal('baz');
+      expect(tpl({ baz: [2] })).to.equal('bop');
+      expect(tpl({ bar: false })).to.equal('bop');
+    });
+
+    describe('in "for" tags', function () {
+      it('can be used as fallback', function () {
+        var tpl = jinja.compile('{% for foo in bar %}blah{% else %}hooray!{% endfor %}');
+        expect(tpl({ bar: [] })).to.equal('hooray!');
+        expect(tpl({ bar: {}})).to.equal('hooray!');
+
+        expect(tpl({ bar: [1] })).to.equal('blah');
+        expect(tpl({ bar: { foo: 'foo' }})).to.equal('blah');
+      });
+
+      it('throws if using "elseif"', function () {
+        var fn = function () {
+          jinja.compile('{% for foo in bar %}hi!{% elseif blah %}nope{% endfor %}');
+        };
+        expect(fn).to.throwException();
+      });
+    });
+  });
+
+  describe('Tag: for', function () {
+
+    var tpl = jinja.compile('{% for foo in bar %}{{ foo }}, {% endfor %}');
+    it('loops arrays', function () {
+      expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('foo, bar, baz, ');
+    });
+
+    it('loops objects', function () {
+      expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('baz, pow, foo, ');
+    });
+
+    describe('loop object', function () {
+      it('index0', function () {
+        var tpl = jinja.compile('{% for foo in bar %}[{{ loop.index0 }}, {{ foo }}]{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('[0, foo][1, bar][2, baz]');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('[0, baz][1, pow][2, foo]');
+      });
+
+      it('context', function () {
+        var inner = jinja.compile('{{ f }}', { filename: "inner" }),
+          tpl = jinja.compile('{{ f }}{% for f in bar %}{{ f }}{% include "inner" %}{{ f }}{% endfor %}{{ f }}');
+        expect(tpl({ f: 'z', bar: ['a'] })).to.equal('zaaaz');
+        expect(tpl({ bar: ['a'] })).to.equal('aaa');
+      });
+
+      it('index', function () {
+        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index }}{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('123');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('123');
+      });
+
+      it('index0', function () {
+        var tpl = jinja.compile('{% for foo in bar %}{{ loop.index0 }}{% endfor %}');
+        expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('012');
+        expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('012');
+      });
+
     });
 
   });
@@ -340,6 +254,110 @@
     });
   });
 
+  describe('Tag: include', function () {
+
+    it('includes the given template', function () {
+      jinja.compile('{{array.length}}', { filename: 'included_2.html' });
+      expect(jinja.compile('{% include "included_2.html" %}')({ array: ['foo'] }))
+        .to.equal('1');
+    });
+
+    it('includes from parent templates', function () {
+      jinja.compile('foobar', { filename: 'foobar' });
+      jinja.compile('{% include "foobar" %}', { filename: 'parent' });
+      expect(jinja.compile('{% extends "parent" %}')())
+        .to.equal('foobar');
+    });
+
+  });
+
+  //describe('Tag: extends', function () {
+  //
+  //  it('throws on circular references', function () {
+  //    var circular1 = "{% extends 'extends_circular2.html' %}{% block content %}Foobar{% endblock %}",
+  //      circular2 = "{% extends 'extends_circular1.html' %}{% block content %}Barfoo{% endblock %}",
+  //      fn = function () {
+  //        jinja.compile(circular1, { filename: 'extends_circular1.html' });
+  //        jinja.compile(circular2, { filename: 'extends_circular2.html' })();
+  //      };
+  //    expect(fn).to.throwException();
+  //  });
+  //
+  //  it('throws if not first tag', function () {
+  //    var fn = function () {
+  //      jinja.compile('asdf {% extends foo %}')();
+  //    };
+  //    expect(fn).to.throwException();
+  //  });
+  //});
+
+  describe('Tag: block', function () {
+
+    it('basic', function () {
+      var tpl,
+        extends_base = [
+          'This is from the "extends_base" template.',
+          '',
+          '{% block one %}',
+          '  This is the default content in block `one`',
+          '{% endblock %}',
+          '',
+          '{% block two %}',
+          '  This is the default content in block `two`',
+          '{% endblock %}'
+        ].join('\n'),
+        extends1 = [
+          '{% extends "extends_base" %}',
+          'This is content from "extends_1", you should not see it',
+          '',
+          '{% block one %}',
+          '  This is the "extends_1" content in block `one`',
+          '{% endblock %}'
+        ].join('\n');
+
+      jinja.compile(extends_base, { filename: 'extends_base' });
+      tpl = jinja.compile(extends1, { filename: 'extends1' });
+      expect(tpl({})).to.equal('This is from the "extends_base" template.\n\n\n  This is the "extends_1" content in block `one`\n\n\n\n  This is the default content in block `two`\n');
+    });
+
+    it('can chain extends', function () {
+      var tpl,
+        extends_base = [
+          'This is from the "extends_base" template.',
+          '',
+          '{% block one %}',
+          '  This is the default content in block `one`',
+          '{% endblock %}',
+          '',
+          '{% block two %}',
+          '  This is the default content in block `two`',
+          '{% endblock %}'
+        ].join('\n'),
+        extends1 = [
+          '{% extends "extends_base" %}',
+          'This is content from "extends_1", you should not see it',
+          '',
+          '{% block one %}',
+          '  This is the "extends_1" content in block `one`',
+          '{% endblock %}'
+        ].join('\n'),
+        extends2 = [
+          '{% extends "extends1" %}',
+          'This is content from "extends_2", you should not see it',
+          '',
+          '{% block one %}',
+          '  This is the "extends_2" content in block `one`',
+          '{% endblock %}'
+        ].join('\n');
+
+      jinja.compile(extends_base, { filename: 'extends_base' });
+      jinja.compile(extends1, { filename: 'extends1' });
+      tpl = jinja.compile(extends2, { filename: 'extends2' });
+      expect(tpl({})).to.equal('This is from the "extends_base" template.\n\n\n  This is the "extends_2" content in block `one`\n\n\n\n  This is the default content in block `two`\n');
+    });
+
+  });
+
   describe('Filter', function () {
     var opts = {filters: filters};
 
@@ -356,7 +374,7 @@
       testFilter('add(2)', { v: 'foo' }, 'foo2', 'string var turns addend into a string');
       testFilter('add("bar")', { v: 'foo' }, 'foobar', 'strings concatenated');
       testFilter('split("|")|join(":")', { v: 'a|b|c' }, 'a:b:c', 'string split join with pipe and colon');
-      gtestFilter('split:":" | join:")"', { v: 'a:b:c' }, 'a)b)c', 'test alternate (liquid-style) filter args');
+      testFilter('split:":" | join:")"', { v: 'a:b:c' }, 'a)b)c', 'test alternate (liquid-style) filter args');
     });
 
     describe('html', function () {
