@@ -355,7 +355,8 @@
       testFilter('add(2)', { v: '1' }, '12', 'string number is not real number');
       testFilter('add(2)', { v: 'foo' }, 'foo2', 'string var turns addend into a string');
       testFilter('add("bar")', { v: 'foo' }, 'foobar', 'strings concatenated');
-      testFilter('split("|")|join(";")', { v: 'a|b|c' }, 'a;b;c', 'string split join');
+      testFilter('split("|")|join(":")', { v: 'a|b|c' }, 'a:b:c', 'string split join with pipe and colon');
+      gtestFilter('split:":" | join:")"', { v: 'a:b:c' }, 'a)b)c', 'test alternate (liquid-style) filter args');
     });
 
     describe('html', function () {

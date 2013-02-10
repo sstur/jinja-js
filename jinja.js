@@ -113,6 +113,7 @@ var jinja;
     } else
     if (type == 'output') {
       var extracted = this.extractEnt(tag, STRINGS, '@');
+      extracted.src = extracted.src.replace(/\(([^)]+)\)/g, ':$1');
       extracted.src = extracted.src.split('|');
       var parts = this.injectEnt(extracted, '@');
       if (parts.length > 1) {
@@ -138,11 +139,6 @@ var jinja;
     var parser = this;
     src = src.trim();
     var i = src.indexOf(':');
-    //to allow parens syntax; kinda hacky
-    if (i < 0 && src.slice(-1) == ')') {
-      src = src.slice(0, -1);
-      i = src.indexOf('(');
-    }
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i), args = src.slice(i + 1), arr = [name];
     args.replace(LITERALS, function(arg) {

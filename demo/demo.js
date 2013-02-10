@@ -8,8 +8,9 @@ jQuery(function($) {
     indent_size: 2
   };
 
-  var initSrc = trimLinebreaks($('#example-src').html() || '');
-  $jinja.val(initSrc);
+  var src = $('#example-src').html() || '';
+  src = trimLinebreaks(src);
+  $jinja.val(src);
 
   var input = CodeMirror.fromTextArea($jinja.get(0), {
     tabSize: 2,
