@@ -1,4 +1,4 @@
-g#JavaScript templating engine based on Jinja2
+#JavaScript templating engine based on Jinja2
 
 Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis
 on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed
