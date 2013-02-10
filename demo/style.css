@@ -10,7 +10,7 @@ body>div {
   float: left;
   padding: 12px;
 }
-textarea, pre {
+.input textarea, .output pre {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   margin: 0;
@@ -21,6 +21,9 @@ textarea, pre {
   width: 512px;
   height: 300px;
   overflow: scroll;
+}
+.CodeMirror {
+  border: 1px solid #999;
 }
 textarea {
 }

@@ -387,8 +387,8 @@ var jinja;
       fn();
       pop();
     };
-    data = data || {};
-    opts = extend(defaults, opts || {});
+    var data = data || {};
+    var opts = extend(defaults, opts || {});
     var filters = extend({
       html: function(val) {
         return toString(val)

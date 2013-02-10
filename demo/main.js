@@ -4,22 +4,31 @@ jQuery(function($) {
   var $jinja = $('#jinja');
   var $output = $('#output');
 
-  var timeout;
   var beautifyOpts = {
     indent_size: 2
   };
 
-  $jinja.on('keyup', function() {
+  var initSrc = removeLeadingLinebreaks($('#example-src').html() || '');
+  $jinja.val(initSrc);
+  update(initSrc);
+
+  var editor = CodeMirror.fromTextArea($jinja.get(0), {
+    tabSize: 2,
+    lineNumbers: true,
+    autofocus: true,
+    mode: {name: "jinja2", htmlMode: true}
+  });
+
+  var timeout;
+  editor.on('change', function(instance, change) {
+    console.log('change');
     clearTimeout(timeout);
     setTimeout(update, 100);
   });
 
-  var exampleSrc = removeLeadingLinebreaks($('#example-src').html() || '');
-  $jinja.val(exampleSrc);
-  update();
 
-  function update() {
-    var src = $jinja.val();
+  function update(val) {
+    var src = (val == null) ? editor.getValue() : val;
     try {
       var fn = jinja.compile(src).render;
     } catch(e) {

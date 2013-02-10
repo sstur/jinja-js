@@ -4,11 +4,12 @@
 <title>Jinja-JS Demo</title>
 <link rel="stylesheet" href="vendor/codemirror/lib/codemirror.css"/>
 <link rel="stylesheet" href="style.css"/>
-<!--[if lt IE 9]><script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/1.2.4/es5-shim.min.js"></script><![endif]-->
-<script src="//code.jquery.com/jquery-1.9.1.min.js"></script>
+<!--[if lt IE 9]><script src="vendor/es5-shim.min.js"></script><![endif]-->
+<script src="vendor/jquery-1.9.1.min.js"></script>
 <script src="vendor/beautify.js"></script>
 <script src="vendor/codemirror/lib/codemirror.js"></script>
-<script src="../jinja.js"></script>
+<script src="vendor/codemirror/mode/jinja2/jinja2.js"></script>
+  <script src="../jinja.js"></script>
 <script src="main.js"></script>
 <script id="example-src" type="text/x-tmpl-jinja">
 <html lang="en">
@@ -27,7 +28,7 @@
 </script>
 </head>
 <body>
-<div class="left"><textarea name="nowrap" id="jinja"></textarea></div>
-<div class="right"><pre><code id="output"></code></pre></div>
+<div class="input"><textarea name="nowrap" id="jinja"></textarea></div>
+<div class="output"><pre><code id="output"></code></pre></div>
 </body>
 </html>
