@@ -1,7 +1,7 @@
 /*!
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]
  * In the interest of simplicity, it deviates from Jinja2 as follows:
- * - Line statements, cycle, super, macros are not implemented
+ * - Line statements, cycle, super, macros and block nesting are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
  * - Only "html" and "safe" filters are built in
  * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
@@ -379,7 +379,7 @@ var jinja;
     var each = function(obj, loopvar, fn1, fn2) {
       if (obj == null) return;
       var arr = Array.isArray(obj) ? obj : Object.keys(obj), len = arr.length;
-      var ctx = {loop: {length: len}};
+      var ctx = {loop: {length: len, first: arr[0], last: arr[len - 1]}};
       push(ctx);
       for (var i = 0; i < len; i++) {
         extend(ctx.loop, {index: i + 1, index0: i});
