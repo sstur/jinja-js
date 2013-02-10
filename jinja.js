@@ -318,20 +318,7 @@ var jinja;
   tagHandlers.elif = tagHandlers.elseif;
 
   var runtimeRender = function render(data, opts) {
-    data = data || {};
     var defaults = {autoEscape: 'html'};
-    var filters = {
-      html: function(val) {
-        return toString(val)
-          .split('&').join('&amp;')
-          .split('<').join('&lt;')
-          .split('>').join('&gt;')
-          .split('"').join('&quot;');
-      },
-      safe: function(val) {
-        return val;
-      }
-    };
     var toString = function(val) {
       return (val == null || typeof val.toString != 'function') ? '' : '' + val.toString();
     };
@@ -341,9 +328,6 @@ var jinja;
       });
       return dest;
     };
-    opts = extend(defaults, opts || {});
-    filters = extend(filters, opts.filters || {});
-    var stack = [Object.create(data)], output = [];
     //get a value, lexically, starting in current context; a.b -> get("a","b")
     var get = function() {
       var val, n = arguments[0], c = stack.length;
@@ -403,6 +387,22 @@ var jinja;
       fn();
       pop();
     };
+    data = data || {};
+    opts = extend(defaults, opts || {});
+    var filters = extend({
+      html: function(val) {
+        return toString(val)
+          .split('&').join('&amp;')
+          .split('<').join('&lt;')
+          .split('>').join('&gt;')
+          .split('"').join('&quot;');
+      },
+      safe: function(val) {
+        return val;
+      }
+    }, opts.filters || {});
+    var stack = [Object.create(data || {})], output = [];
+
     ["CODE"]
     return output.join('');
   };
