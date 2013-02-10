@@ -34,7 +34,12 @@ inheritance, block scope, for/else and safe compilation to dependence-free javas
 It should run on any browser or JS environment that supports ES5 (use es5-shim on IE8 and below) and JSON.
 
 
-##Compatibility with Liquid Markup
+##Documentation
+
+Detailed documentation [can be found here][docs].
+
+
+##Compatibility with Liquid
 
 [Liquid markup][liquid] by Shopify is a Ruby template language very similar to Jinja (it is based on Django
 just like Jinja) but it has a few differences. For compatibility, we have implemented the Liquid syntax as
@@ -49,11 +54,6 @@ In those cases, this implementation will allow either syntax. However the follow
  * Liquid: `{% comment %} my comment {% endcomment %}`
 
 You must use Jinja's comment syntax: `{# my comment #}`
-
-
-##Documentation
-
-Detailed documentation can be found [here][docs].
 
 
 ##Differences from Python's Jinja2

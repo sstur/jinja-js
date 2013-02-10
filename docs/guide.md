@@ -2,7 +2,7 @@
 
 This document describes the syntax and semantics of the template engine and
  will be most useful as reference to those creating Jinja templates. Most of
- this content is adapted from the official [Jinja Docs][jinjadocs].
+ this content is adapted from the official [Jinja2 Docs][jinjadocs].
 
 ## Synopsis
 
@@ -10,7 +10,7 @@ A template is simply a text file. It can generate any text-based format
  (HTML, XML, CSV etc.). It doesn't have a specific file extension, `.html`
  or `.xml` are just fine.
 
-A template contains **variables** or **expressions**, which get replaced with
+A template contains **variables** and **expressions**, which get replaced with
  values when the template is evaluated, and tags, which control the logic of
  the template. The template syntax is heavily inspired by Django and [almost
  completely compatible][liquid_compatibility] with [Liquid][liquid].
@@ -318,4 +318,4 @@ Included templates have access to the variables of the active context by
 
 [jinjadocs]: http://jinja.pocoo.org/docs/templates/
 [liquid]: http://liquidmarkup.org/
-[liquid_compatibility]: /compatibility
+[liquid_compatibility]: /compatibility.md
