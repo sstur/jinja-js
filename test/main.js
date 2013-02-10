@@ -17,23 +17,41 @@
     }
   };
 
-//  describe('Values and Literals', function () {
-//
-//    it('tests string literals', function () {
-//      var tpl = jinja.compile('{{ "abc" }}');
-//      expect(tpl({})).to.equal('abc');
-//
-//      tpl = jinja.compile("{{ 'abc' }}");
-//      expect(tpl({})).to.equal('abc');
-//
-//      tpl = jinja.compile('{{{ "a>c" }}}');
-//      expect(tpl({})).to.equal('a>c');
-//
-//      tpl = jinja.compile("{{ '}}' }}");
-//      expect(tpl({})).to.equal('}}');
-//    });
-//
-//  });
+  describe('Values and Literals', function () {
+
+    it('tests string literals', function () {
+      var tpl = jinja.compile('{{ "abc" }}');
+      expect(tpl({})).to.equal('abc');
+
+      tpl = jinja.compile("{{ 'abc' }}");
+      expect(tpl({})).to.equal('abc');
+
+      tpl = jinja.compile('{{{ "a>c" }}}');
+      expect(tpl({})).to.equal('a>c');
+
+      tpl = jinja.compile("{{ '}}' }}");
+      expect(tpl({})).to.equal('}}');
+    });
+
+  });
+
+  describe('Whitespace Control', function () {
+
+    it('leading and trailing whitespace', function () {
+      var tpl = jinja.compile(' {{- "abc" }} ');
+      expect(tpl({})).to.equal('abc ');
+
+      tpl = jinja.compile(" {{ 'abc' -}} ");
+      expect(tpl({})).to.equal(' abc');
+
+      tpl = jinja.compile(' {{{- "a>c" }}} ');
+      expect(tpl({})).to.equal('a>c ');
+
+      tpl = jinja.compile(" {{{ 'a&c' -}}} ");
+      expect(tpl({})).to.equal(' a&c');
+    });
+
+  });
 
   describe('Tag: if', function () {
 

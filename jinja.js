@@ -1,7 +1,7 @@
 /*!
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]
  * In the interest of simplicity, it deviates from Jinja2 as follows:
- * - Line statements, whitespace control, cycle, super, macros are not implemented
+ * - Line statements, cycle, super, macros are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
  * - Only "html" and "safe" filters are built in
  * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
@@ -12,7 +12,6 @@
  * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
  * - filter arguments can only be literals
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
- * - whitespace control not implemented
  *
  */
 /*global require, exports */
@@ -41,6 +40,8 @@ var jinja;
   var PROPS = /\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\]/g;
   //extended (english) operators
   var EOPS = /\b(and|or|not|is|isnot)\b/g;
+  var L_SPACE = /^\s+/;
+  var T_SPACE = /\s+$/;
 
   var delimeters = {
     '{%': 'tag',
@@ -76,19 +77,30 @@ var jinja;
   };
 
   Parser.prototype.tokenize = function(src) {
-    var lastEnd = 0, parser = this;
+    var lastEnd = 0, parser = this, trimLeading = false;
     src.replace(TOKENS, function(token) {
       var tagStart = arguments[arguments.length - 2], len = token.length;
       var text = src.slice(lastEnd, tagStart);
-      parser.textHandler(text);
+      if (trimLeading) text = text.replace(L_SPACE, '');
+      token = token.replace(/^(\{+)-/, function(_, delim) {
+        text = text.replace(T_SPACE, '');
+        return delim;
+      });
+      token = token.replace(/-(\}+)$/, function(_, delim) {
+        trimLeading = true;
+        return delim;
+      });
       if (token.slice(0, 3) == '{{{') {
         //liquid-style: make {{{x}}} => {{x|safe}}
         token = token.slice(1, -3) + '|safe}}';
       }
+      parser.textHandler(text);
       parser.tokenHandler(token);
       lastEnd = tagStart + len;
     });
-    this.textHandler(src.slice(lastEnd));
+    var text = src.slice(lastEnd);
+    if (trimLeading) text = text.replace(L_SPACE, '');
+    this.textHandler(text);
   };
 
   Parser.prototype.textHandler = function(text) {
