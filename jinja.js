@@ -14,7 +14,7 @@
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  *
  */
-/*global require, exports */
+/*global require, exports, $CODE */
 var jinja;
 (function(definition) {
   if (typeof define == 'function') {
@@ -173,21 +173,20 @@ var jinja;
 
   //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`
   Parser.prototype.parseExpr = function(src) {
-    var parser = this;
     //first pass we extract string literals -> @
-    var parsed1 = parser.extractEnt(src, STRINGS, '@');
+    var parsed1 = this.extractEnt(src, STRINGS, '@');
     //replace and/or/not
     parsed1.src = parsed1.src.replace(EOPS, function(s) {
       return operators[s] || s;
     });
     //reconstruct
-    src = parser.injectEnt(parsed1, '@');
+    src = this.injectEnt(parsed1, '@');
     //sub out vars and literals
-    parsed1 = parser.extractEnt(src, ALL_IDENTS, 'i');
+    parsed1 = this.extractEnt(src, ALL_IDENTS, 'i');
     //parse variables
-    parsed1.subs = parsed1.subs.map(parser.parseVar);
+    parsed1.subs = parsed1.subs.map(this.parseVar.bind(this));
     //sub out operators
-    var parsed2 = parser.extractEnt(parsed1.src, OPERATORS, '&');
+    var parsed2 = this.extractEnt(parsed1.src, OPERATORS, '&');
     //remove white space
     var simplified = parsed2.src = parsed2.src.replace(/\s+/g, '');
     //allow 'not' unary operator
@@ -197,8 +196,8 @@ var jinja;
     if (!simplified.match(/^i(&i)*$/)) {
       throw new Error('Invalid expression: ' + src);
     }
-    parsed1.src = parser.injectEnt(parsed2, '&');
-    return parser.injectEnt(parsed1, 'i');
+    parsed1.src = this.injectEnt(parsed2, '&');
+    return this.injectEnt(parsed1, 'i');
   };
 
   Parser.prototype.parseVar = function(src) {
@@ -408,8 +407,8 @@ var jinja;
       }
     }, opts.filters || {});
     var stack = [Object.create(data || {})], output = [];
-
-    ["CODE"]
+    //the following gets replaced at compile time
+    $CODE();
     return output.join('');
   };
 
@@ -420,7 +419,7 @@ var jinja;
     parser.readTemplateFile = this.readTemplateFile;
     var code = parser.parse(markup);
     runtime = runtime || (runtime = runtimeRender.toString());
-    code = runtime.replace('["CODE"]', code);
+    code = runtime.replace('$CODE()', '(function() {' + code + '})()');
     var fn = new Function('return (' + code + ')')();
     return {render: fn};
   };
