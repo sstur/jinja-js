@@ -3,6 +3,11 @@ jQuery(function($) {
   "use strict";
   var $jinja = $('#jinja');
   var $output = $('#output');
+  var includeRuntime = false;
+  $('#include-runtime').change(function() {
+    includeRuntime = $(this).is(':checked');
+    update();
+  });
 
   var beautifyOpts = {
     indent_size: 2
@@ -37,7 +42,7 @@ jQuery(function($) {
   function update() {
     var src = input.getValue();
     try {
-      var fn = jinja.compile(src).render;
+      var fn = jinja.compile(src, {runtime: includeRuntime}).render;
     } catch(e) {
       //todo: update error panel
       return;
@@ -58,13 +63,9 @@ jQuery(function($) {
   }
 
   function squashBoilerplate(src) {
-    src = src.replace(/^  var (\n {3,}|[^\n])+/gm, function(s) {
-      s = s.replace(/[\r\n]+( +)/g, '');
-      return '|' + s + '\r';
-    });
-    src = src.replace(/\r *\n/g, '');
-    src = src.replace(/;\n\|  var/g, ',');
-    src = src.replace(/\|  var/gm, '  var');
+    src = src.replace('function render', 'function');
+    src = src.replace('anonymous', 'render');
+    src = src.replace(/,\n      \b/g, ', ');
     return src;
   }
 

@@ -73,7 +73,7 @@ var jinja;
 
   Parser.prototype.parse = function(src) {
     this.tokenize(src);
-    return this.compiled.join('\n');
+    return this.compiled;
   };
 
   Parser.prototype.tokenize = function(src) {
@@ -277,7 +277,7 @@ var jinja;
       if (this.isParent) {
         ++this.parentBlocks;
         var blockName = 'block_' + (this.escName(name) || this.parentBlocks);
-        this.push('renderBlock(typeof ' + blockName + ' == "function" ? ' + blockName + ' : function() {');
+        this.push('block(typeof ' + blockName + ' == "function" ? ' + blockName + ' : function() {');
       } else
       if (this.hasParent) {
         this.isSilent = false;
@@ -321,7 +321,7 @@ var jinja;
   //python/django style
   tagHandlers.elif = tagHandlers.elseif;
 
-  var runtimeRender = function render(data, opts) {
+  var getRuntime = function runtime(data, opts) {
     var defaults = {autoEscape: 'html'};
     var toString = function(val) {
       return (val == null || typeof val.toString != 'function') ? '' : '' + val.toString();
@@ -387,13 +387,16 @@ var jinja;
       if (len == 0 && fn2) fn2();
       pop();
     };
-    var renderBlock = function(fn) {
+    var block = function(fn) {
       push();
       fn();
       pop();
     };
-    var data = data || {};
-    var opts = extend(defaults, opts || {});
+    var render = function() {
+      return output.join('');
+    };
+    data = data || {};
+    opts = extend(defaults, opts || {});
     var filters = extend({
       html: function(val) {
         return toString(val)
@@ -407,20 +410,28 @@ var jinja;
       }
     }, opts.filters || {});
     var stack = [Object.create(data || {})], output = [];
-    //the following gets replaced at compile time
-    $CODE();
-    return output.join('');
+    return {get: get, set: set, push: push, pop: pop, write: write, filter: filter, each: each, block: block, render: render};
   };
 
   var runtime;
 
-  jinja.compile = function(markup) {
+  jinja.compile = function(markup, opts) {
+    opts = opts || {};
     var parser = new Parser();
     parser.readTemplateFile = this.readTemplateFile;
-    var code = parser.parse(markup);
-    runtime = runtime || (runtime = runtimeRender.toString());
-    code = runtime.replace('$CODE()', '(function() {' + code + '})()');
-    var fn = new Function('return (' + code + ')')();
+    var code = [];
+    code.push('function render($) {');
+    code.push('var get = $.get, set = $.set, push = $.push, pop = $.pop, write = $.write, filter = $.filter, each = $.each, block = $.block;');
+    code.push.apply(code, parser.parse(markup));
+    code.push('return $.render();');
+    code.push('}');
+    code = code.join('\n');
+    if (opts.runtime === false) {
+      var fn = new Function('data', 'options', 'return (' + code + ')(runtime(data, options))');
+    } else {
+      runtime = runtime || (runtime = getRuntime.toString());
+      fn = new Function('data', 'options', 'return (' + code + ')((' + runtime + ')(data, options))');
+    }
     return {render: fn};
   };
 

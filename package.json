@@ -18,6 +18,9 @@
     "expect.js": "*",
     "mocha": "*"
   },
+  "bin": {
+    "jinjajs": "./cli.js"
+  }
   "keywords": [
     "template",
     "templating",
