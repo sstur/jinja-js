@@ -7,7 +7,7 @@ jQuery(function($) {
   $('#include-runtime').change(function() {
     includeRuntime = $(this).is(':checked');
     update();
-  });
+  }).attr({checked: false});
 
   var beautifyOpts = {
     indent_size: 2
