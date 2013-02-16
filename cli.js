@@ -3,6 +3,7 @@
 (function() {
   "use strict";
   var fs = require('fs');
+  var path = require('path');
   var jinja = require('./jinja');
 
   //if uglify-js is installed
@@ -10,10 +11,12 @@
     var uglifyjs = require('uglify-js');
   } catch(e) {}
 
-  var dir = process.cwd();
+  var cwd = process.cwd(), dir = cwd;
 
   //path delimiter is platform-specific
-  var join = require('path').join;
+  var join = path.join;
+  var dirname = path.dirname;
+  var basename = path.basename;
 
   //path delimiter is forward-slash
   var urljoin = function() {
@@ -99,8 +102,26 @@
     }
   };
 
+  var isDir = function(path) {
+    try {
+      var stat = fs.statSync(join(dir, path));
+    } catch(e) {}
+    return (stat && stat.isDirectory()) ? true : false;
+  };
+
+  //for each path, we set the working directory and process the file or directory contents
   paths.forEach(function(path) {
-    compilePath(path);
+    //remove trailing slash
+    path = path.replace(/[\\\/]$/, '');
+    if (isDir(path)) {
+      dir = join(cwd, path);
+      fs.readdirSync(dir).forEach(function(path) {
+        compilePath(path);
+      });
+    } else {
+      dir = join(cwd, path);
+      compilePath(basename(path));
+    }
   });
 
 })();
