@@ -3,11 +3,23 @@
 (function() {
   "use strict";
   var fs = require('fs');
-  var join = require('path').join;
   var jinja = require('./jinja');
+
+  //if uglify-js is installed
   try {
     var uglifyjs = require('uglify-js');
   } catch(e) {}
+
+  var dir = process.cwd();
+
+  //path delimiter is platform-specific
+  var join = require('path').join;
+
+  //path delimiter is forward-slash
+  var urljoin = function() {
+    var path = join.apply(null, arguments);
+    return path.replace(/\\/g, '/');
+  };
 
   var args = process.argv.slice(2);
   var flags = {};
@@ -40,7 +52,7 @@
     if (file in fileCache) {
       return fileCache[file];
     }
-    return fileCache[file] = fs.readFileSync(file, 'utf8');
+    return fileCache[file] = fs.readFileSync(join(dir, file), 'utf8');
   };
 
   //use uglifyjs to minify compiled template
@@ -67,19 +79,19 @@
     if (flags.min) {
       compiled = uglifyCode(compiled);
     }
-    fs.writeFileSync(file + '.js', compiled, 'utf8');
+    fs.writeFileSync(join(dir, file + '.js'), compiled, 'utf8');
   };
 
   var compilePath = function(path) {
     try {
-      var list = fs.readdirSync(path);
+      var list = fs.readdirSync(join(dir, path));
     } catch(e) {}
     if (list) {
       //handle directories recursively
       list.forEach(function(name) {
         //skip files that begin with a symbol
         if (!name.match(/^[a-z]/i)) return;
-        compilePath(join(path, name));
+        compilePath(urljoin(path, name));
       });
     } else
     if (path.match(/\.html$/)) {
