@@ -40,11 +40,12 @@
 
   function register($name, $func) {
     (function(name, func) {
+      var tmpl = {name: name, render: func};
       var module = (typeof jinja != 'undefined') ? jinja : (typeof require == 'function') ? require('jinja') : null;
       if (module && module.compiled) {
-        module.compiled[name] = func;
+        module.compiled[name] = tmpl;
       }
-      return func;
+      return tmpl;
     })($name, $func);
   }
 

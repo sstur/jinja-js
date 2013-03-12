@@ -232,6 +232,7 @@ var jinja;
       });
       str = '"' + str + '"';
     }
+    //todo: try/catch or deal with invalid characters (linebreaks, control characters)
     return JSON.parse(str);
   };
 

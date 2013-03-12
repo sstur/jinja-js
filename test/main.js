@@ -26,11 +26,23 @@
       tpl = jinja.compile("{{ 'abc' }}");
       expect(tpl({})).to.equal('abc');
 
-      tpl = jinja.compile('{{{ "a>c" }}}');
-      expect(tpl({})).to.equal('a>c');
-
       tpl = jinja.compile("{{ '}}' }}");
       expect(tpl({})).to.equal('}}');
+    });
+
+  });
+
+  describe('Unescaped Output', function () {
+
+    it('tests string literals', function () {
+      var tpl = jinja.compile("{{{ text }}}");
+      expect(tpl({text: 'plain'})).to.equal('plain');
+
+      tpl = jinja.compile("{{{ html }}}");
+      expect(tpl({html: '<br>'})).to.equal('<br>');
+
+      tpl = jinja.compile('{{{ "a>c" }}}');
+      expect(tpl({})).to.equal('a>c');
     });
 
   });
