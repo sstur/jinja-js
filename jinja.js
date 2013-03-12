@@ -14,7 +14,7 @@
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  *
  */
-/*global require, exports, $CODE */
+/*global require, exports */
 var jinja;
 (function(definition) {
   if (typeof define == 'function') {

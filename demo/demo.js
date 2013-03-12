@@ -13,8 +13,9 @@ jQuery(function($) {
     indent_size: 2
   };
 
-  var src = $('#example-src').html() || '';
-  src = trimLinebreaks(src);
+  var qs = location.search.slice(1).match(/(^|&)src=([^&]+)(&|$)/);
+  var src = qs ? qs[1] : $('#example-src').html();
+  src = src ? trimLinebreaks(src) : '';
   $jinja.val(src);
 
   var input = CodeMirror.fromTextArea($jinja.get(0), {
