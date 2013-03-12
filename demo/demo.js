@@ -14,7 +14,7 @@ jQuery(function($) {
   };
 
   var qs = location.search.slice(1).match(/(^|&)src=([^&]+)(&|$)/);
-  var src = qs ? qs[1] : $('#example-src').html();
+  var src = qs ? decodeURIComponent(qs[2].replace(/\+/g, ' ')) : $('#example-src').html();
   src = src ? trimLinebreaks(src) : '';
   $jinja.val(src);
 
