@@ -14,17 +14,18 @@
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  *
  */
-/*global require, exports */
+/*global require, exports, module, define */
 var jinja;
 (function(definition) {
-  if (typeof define == 'function') {
-    define(definition);
-  } else
-  if (typeof exports == 'object') {
-    definition(require, exports);
-  } else {
-    definition(function() {}, jinja = {});
+  if (typeof exports == 'object' && typeof module == 'object') {
+    // CommonJS
+    return definition(require, exports, module);
   }
+  if (typeof define == 'function') {
+    //AMD or Other
+    return define.amd ? define(['exports'], definition) : define('jinja', definition);
+  }
+  definition(function() {}, jinja = {});
 })(function(require, jinja) {
   "use strict";
   var TOKENS = /\{\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}\}|\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}|\{([#%])('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+?\1\}/g;
