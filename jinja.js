@@ -11,6 +11,7 @@
  * - `{% for n in object %}` will iterate the object's keys
  * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
  * - filter arguments can only be literals
+ * - `.2` is not a valid number literal; use `0.2`
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  *
  */
@@ -34,11 +35,11 @@ var jinja;
   var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
   var LITERALS = /('(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))/g;
   //note: variable will also match true, false, null (and, or, not)
-  var VARIABLE = /^(?:([a-z_]\w*)(\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\])*)$/i;
-  //all instances of literals and variables including dot and subscript notation
-  var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([a-z_]\w*)(\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
+  var VARIABLE = /^(?:([a-z_]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
+  //all instances of literals and variables including dot and subscript notation (todo: include true/false/null?)
+  var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([a-z_]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
-  var PROPS = /\.\w+|\['(\\.|[^'])+'\]|\["(\\.|[^"'"])+"\]/g;
+  var PROPS = /\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\]/g;
   //extended (english) operators
   var EOPS = /\b(and|or|not|is|isnot)\b/g;
   var L_SPACE = /^\s+/;
@@ -146,7 +147,7 @@ var jinja;
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i), args = src.slice(i + 1), arr = [name];
     args.replace(LITERALS, function(arg) {
-      arr.push(parser.parseQuoted(arg));
+      arr.push(parser.parseLiteral(arg));
     });
     return '[' + JSON.stringify(arr).slice(1, -1) + ']';
   };
@@ -211,7 +212,7 @@ var jinja;
     if (ident) {
       var parts = [ident[1]];
       src.replace(PROPS, function(s) {
-        parts.push(s.charAt(0) == '.' ? s.slice(1) : parser.parseQuoted(s.slice(1, -1)));
+        parts.push(s.charAt(0) == '.' ? s.slice(1) : parser.parseLiteral(s.slice(1, -1)));
       });
       return 'get(' + JSON.stringify(parts).slice(1, -1) + ')';
     }
@@ -223,6 +224,21 @@ var jinja;
     return str.replace(/\W/g, function(s) {
       return '$' + s.charCodeAt(0).toString(16);
     });
+  };
+
+  //currently parses null, true/false, numbers and strings
+  Parser.prototype.parseLiteral = function(literal) {
+    if (literal == 'null') {
+      return null;
+    } else
+    if (literal == 'true' || literal == 'false') {
+      return (literal == 'true');
+    } else
+    if (literal.match(/^[\d+-]/)) {
+      return parseFloat(literal) || 0;
+    } else {
+      return this.parseQuoted(literal);
+    }
   };
 
   Parser.prototype.parseQuoted = function(str) {
