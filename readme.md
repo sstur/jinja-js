@@ -1,12 +1,8 @@
 #JavaScript templating engine based on Jinja2
 
-Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis
-on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed
-to run on Node or in the [browser][demo] and weighs in around 3K (min + gzip).
+Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed to run on Node or in the [browser][demo] and weighs in around 3K (min + gzip).
 
-Jinja was inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig].
-They all have similar syntax for rendering variables, looping and filtering. This implementation aims to be compatible
-with Jinja2 and Liquid, but Twig is mostly the same also.
+Jinja was inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig]. They all have similar syntax for rendering variables, looping and filtering. This implementation aims to be compatible with Jinja2 and Liquid, but Twig is mostly the same also.
 
 Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
@@ -28,8 +24,7 @@ Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
 ##Features
 
-This implementation of Jinja supports auto-escaping output by default, extensible filters, template
-inheritance, block scope, for/else and safe compilation to dependence-free javascript function.
+This implementation of Jinja supports auto-escaping output by default, extensible filters, template inheritance, block scope, for/else and safe compilation to dependence-free javascript function.
 
 It should run on any browser or JS environment that supports ES5 (use es5-shim on IE8 and below) and JSON.
 
@@ -41,9 +36,7 @@ Detailed documentation [can be found here][docs].
 
 ##Compatibility with Liquid
 
-[Liquid markup][liquid] by Shopify is a Ruby template language very similar to Jinja (it is based on Django
-just like Jinja) but it has a few differences. For compatibility, we have implemented the Liquid syntax as
-well as the Jinja syntax in the following cases:
+[Liquid markup][liquid] by Shopify is a Ruby template language very similar to Jinja (it is based on Django just like Jinja) but it has a few differences. For compatibility, we have implemented the Liquid syntax as well as the Jinja syntax in the following cases:
 
  * Liquid: `{{{ html }}}` is equivalent to Jinja `{{ html | safe }}`
  * Liquid: `{{ string | split: ',' }}` is equivalent to Jinja: `{{ string | split(',') }}`
@@ -66,16 +59,21 @@ This implementation deviates from the official [Jinja2][jinja2] as follows:
  - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
  - Filters are not valid in expressions; `foo|length > 1` is invalid
 
-This is mostly to keep the codebase and rendering logic simple. The goal of this implementation is to
-be slim and compile to readable JavaScript. There are other projects that aim to implement the complete
-Jinja2 spec.
+This is mostly to keep the codebase and rendering logic simple. The goal of this implementation is to be slim and compile to readable JavaScript. There are other projects that aim to implement the complete Jinja2 spec.
 
 Also note:
 
  - `{% for n in object %}` will iterate the object's keys
  - subscript notation takes only literals, such as `a[0]` or `a["b"]`
  - filter arguments can only be literals
+ - `.2` is not a valid number literal; use `0.2`
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
+
+To Do:
+
+ - set/assign to accept array and object literals: `set a = [1, 2, 3]`
+ - subscript to accept variables, as in `{% for n in obj %}{{ obj[n] }}{% endfor %}`
+ - properties as functions: `items.find('foo')`
 
 
 ##Test Coverage
@@ -85,9 +83,7 @@ The tests use Mocha and were adapted from a similar and excellent [project][swig
 
 ##Existing Implementations
 
-There are several existing JavaScript implementations of the Jinja family of templating languages, many of which have
-different objectives than this project and may be suitable for some projects but not others. Some worth mentioning
-include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquidjs].
+There are several existing JavaScript implementations of the Jinja family of templating languages, many of which have different objectives than this project and may be suitable for some projects but not others. Some worth mentioning include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquidjs].
 
 
 [docs]: docs/guide.md
