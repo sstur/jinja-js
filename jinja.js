@@ -122,8 +122,12 @@ var jinja;
     } else
     if (type == 'output') {
       var extracted = this.extractEnt(tag, STRINGS, '@');
-      //todo: first extract '\\' then split
-      extracted.src = extracted.src.split('|');
+      //replace || operators with ~
+      extracted.src = extracted.src.replace(/\|\|/g, '~').split('|');
+      //put back || operators
+      extracted.src = extracted.src.map(function(part) {
+        return part.split('~').join('||');
+      });
       var parts = this.injectEnt(extracted, '@');
       if (parts.length > 1) {
         var filters = parts.slice(1).map(this.parseFilter.bind(this));

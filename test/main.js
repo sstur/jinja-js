@@ -109,16 +109,6 @@
     //  expect(jinja.compile('{% extends "a" %}{% set foo = "bar" %}')()
     //  ).to.equal('bar');
     //});
-
-    it('set number is really a number [gh-53]', function() {
-      var opts = {filters: filters};
-      expect(jinja.compile('{% set foo = 1 %}{{ foo|add(1) }}')({}, opts))
-          .to.equal('2');
-      expect(jinja.compile('{% set foo = "1" %}{{ foo|add(1) }}')({}, opts))
-          .to.equal('11');
-      expect(jinja.compile('{% set bar = 1 %} {% set foo = bar %}{{ foo|add(1) }}')({}, opts))
-          .to.equal(' 2');
-    });
   });
 
   describe('Filter:', function() {
@@ -144,6 +134,19 @@
       testFilter('add("bar")', { v: 'foo' }, 'foobar', 'strings concatenated');
       testFilter('split("|")|join(":")', { v: 'a|b|c' }, 'a:b:c', 'string split join with pipe and colon');
       testFilter('split:":" | join:")"', { v: 'a:b:c' }, 'a)b)c', 'test alternate (liquid-style) filter args');
+
+      tpl = jinja.compile("{{ 0 || [1, 'a', false] | join('|') }}");
+      expect(tpl({}, opts)).to.equal('1|a|false');
+    });
+
+    it('set number is really a number', function() {
+      var opts = {filters: filters};
+      expect(jinja.compile('{% set foo = 1 %}{{ foo|add(1) }}')({}, opts))
+          .to.equal('2');
+      expect(jinja.compile('{% set foo = "1" %}{{ foo|add(1) }}')({}, opts))
+          .to.equal('11');
+      expect(jinja.compile('{% set bar = 1 %} {% set foo = bar %}{{ foo|add(1) }}')({}, opts))
+          .to.equal(' 2');
     });
 
     describe('html:', function() {
