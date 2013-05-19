@@ -56,7 +56,7 @@ This implementation deviates from the official [Jinja2][jinja2] as follows:
  - Line statements, cycle, super, macros and block nesting are not implemented
  - Auto escapes html by default (the filter is "html" not "e")
  - Only "html" and "safe" filters are built in
- - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
+ - Object/Array literals are not valid in expressions; `for i in [1, 2]` is not valid
  - Filters are not valid in expressions; `foo|length > 1` is invalid
 
 This is mostly to keep the codebase and rendering logic simple. The goal of this implementation is to be slim and compile to readable JavaScript. There are other projects that aim to implement the complete Jinja2 spec.

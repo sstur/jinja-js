@@ -4,7 +4,7 @@
  * - Line statements, cycle, super, macros and block nesting are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
  * - Only "html" and "safe" filters are built in
- * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is invalid
+ * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is not valid
  * - Filters are not valid in expressions; `foo|length > 1` is invalid
  * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` -> `!=`)
  * Note:
@@ -19,7 +19,7 @@
 var jinja;
 (function(definition) {
   if (typeof exports == 'object' && typeof module == 'object') {
-    // CommonJS
+    // CommonJS/Node
     return definition(require, exports, module);
   }
   if (typeof define == 'function') {
@@ -32,8 +32,13 @@ var jinja;
   var TOKENS = /\{\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}\}|\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}|\{([#%])('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+?\1\}/g;
   //note: $ is not allowed in dot-notation identifiers
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
+  var NON_STRING_LITERALS = /true|false|null|([+-]?\d+(\.\d+)?)/g;
   var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
   var LITERALS = /('(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))/g;
+  //non-primitive literals (array and object literals)
+  var NON_PRIMITIVES = /\[[@%](,[@%])*\]|\[\]|\{((@|[$_a-z][$\w]*):[@%])(,(@|[$_a-z][$\w]*):[@%])*\}|\{\}/g;
+  //bare identifiers in object literals: {foo: 'value'}
+  var OBJECT_IDENTS = /[$_a-z][$\w]*/g;
   //note: variable will also match true, false, null (and, or, not)
   var VARIABLE = /^(?:([a-z_]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
   //all instances of literals and variables including dot and subscript notation (todo: include true/false/null?)
@@ -200,6 +205,36 @@ var jinja;
     }
     parsed1.src = this.injectEnt(parsed2, '&');
     return this.injectEnt(parsed1, 'i');
+  };
+
+  //parse an expression containing only literals (including array literals)
+  Parser.prototype.parseLiteralExpr = function(src) {
+    //extract string literals -> @
+    var parsed1 = this.extractEnt(src, STRINGS, '@');
+    //remove white-space
+    parsed1.src = parsed1.src.replace(/\s+/g, '');
+    //sub out non-string literals (numbers/true/false/null) -> %
+    var parsed2 = this.extractEnt(parsed1.src, NON_STRING_LITERALS, '%');
+    //the rest of this is simply to boil the expression down and check validity
+    var simplified = parsed2.src;
+    //now @ represents strings, and % represents all other literals
+    // the distinction is necessary because @ can be object identifiers, % cannot
+    while (simplified != (simplified = simplified.replace(NON_PRIMITIVES, '%')));
+    //sub in "i" for @ and % (now "i" represents all literals)
+    simplified = simplified.replace(/[@%]/g, 'i');
+    //sub out operators
+    simplified = simplified.replace(OPERATORS, '&');
+    //allow 'not' unary operator
+    simplified = simplified.replace(/!+[i]/g, 'i');
+    //simplify logical grouping
+    while (simplified != (simplified = simplified.replace(/\(i(&i)*\)/g, 'i')));
+    if (!simplified.match(/^i(&i)*$/)) {
+      throw new Error('Invalid expression: ' + src);
+    }
+    //quote object identifiers that might be reserved words: {while: 1}
+    parsed2.src = parsed2.src.replace(OBJECT_IDENTS, '"$&"');
+    parsed1.src = this.injectEnt(parsed2, '%');
+    return this.injectEnt(parsed1, '@');
   };
 
   Parser.prototype.parseVar = function(src) {
