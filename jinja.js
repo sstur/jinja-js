@@ -36,13 +36,15 @@ var jinja;
   var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
   var LITERALS = /('(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))/g;
   //non-primitive literals (array and object literals)
-  var NON_PRIMITIVES = /\[[@%](,[@%])*\]|\[\]|\{((@|[$_a-z][$\w]*):[@%])(,(@|[$_a-z][$\w]*):[@%])*\}|\{\}/g;
+  var NON_PRIMITIVES = /\[[@%](,[@%])*\]|\[\]|\{([@i]:[@%])(,[@i]:[@%])*\}|\{\}/g;
   //bare identifiers in object literals: {foo: 'value'}
-  var OBJECT_IDENTS = /[$_a-z][$\w]*/g;
-  //note: variable will also match true, false, null (and, or, not)
-  var VARIABLE = /^(?:([a-z_]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
+  var OBJECT_IDENTS = /[$_a-z][$\w]*/ig;
+  //note: variable will also match true, false, null (and, or, not) and b.2
+  var VARIABLE = /^(?:([_a-z]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
+  //experimental: VARIABLES will support a.$b but not a.2 and not a[2]
+  var VARIABLES = /([$_a-z][$\w]*)(\.[$_a-z][$\w]*|\[@\])*/ig;
   //all instances of literals and variables including dot and subscript notation (todo: include true/false/null?)
-  var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([a-z_]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
+  var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([_a-z]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   var PROPS = /\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\]/g;
   //extended (english) operators
@@ -207,6 +209,19 @@ var jinja;
     return this.injectEnt(parsed1, 'i');
   };
 
+  //continually replace regex until string doesn't change anymore
+  //Parser.prototype.replaceAll = function(str, regex, replacement) {
+  //  while (str != (str = str.replace(regex, replacement)));
+  //  return str;
+  //};
+
+  //replace complex literals without mistaking subscript notation with array literals
+  Parser.prototype.replaceComplex = function(s) {
+    var parsed = this.extractEnt(s, /i(\[@\])+/g, 'v');
+    parsed.src = parsed.src.replace(NON_PRIMITIVES, '%');
+    return this.injectEnt(parsed, 'v');
+  };
+
   //parse an expression containing only literals (including array literals)
   Parser.prototype.parseLiteralExpr = function(src) {
     //extract string literals -> @
@@ -215,11 +230,15 @@ var jinja;
     parsed1.src = parsed1.src.replace(/\s+/g, '');
     //sub out non-string literals (numbers/true/false/null) -> %
     var parsed2 = this.extractEnt(parsed1.src, NON_STRING_LITERALS, '%');
+    //sub out object/variable identifiers -> i
+    var parsed3 = this.extractEnt(parsed2.src, OBJECT_IDENTS, 'i');
     //the rest of this is simply to boil the expression down and check validity
-    var simplified = parsed2.src;
+    var simplified = parsed3.src;
     //now @ represents strings, and % represents all other literals
     // the distinction is necessary because @ can be object identifiers, % cannot
-    while (simplified != (simplified = simplified.replace(NON_PRIMITIVES, '%')));
+    while (simplified != (simplified = this.replaceComplex(simplified)));
+    //replace dot/subscript notation
+    while (simplified != (simplified = simplified.replace(/i(.i|\[@\])+/, 'i')));
     //sub in "i" for @ and % (now "i" represents all literals)
     simplified = simplified.replace(/[@%]/g, 'i');
     //sub out operators
@@ -231,10 +250,23 @@ var jinja;
     if (!simplified.match(/^i(&i)*$/)) {
       throw new Error('Invalid expression: ' + src);
     }
-    //quote object identifiers that might be reserved words: {while: 1}
-    parsed2.src = parsed2.src.replace(OBJECT_IDENTS, '"$&"');
+    parsed2.src = parsed2.src.replace(VARIABLES, this.parseVarSimple.bind(this));
     parsed1.src = this.injectEnt(parsed2, '%');
     return this.injectEnt(parsed1, '@');
+  };
+
+  Parser.prototype.parseVarSimple = function(src) {
+    var args = Array.prototype.slice.call(arguments);
+    var str = args.pop(), index = args.pop() + src.length;
+    //quote bare object identifiers (might be reserved words like {while: 1})
+    if (str.charAt(index) == ':') {
+      return '"' + src + '"';
+    }
+    src = src.replace(/\[@\]/g, '.@');
+    src = src.split('.').map(function(s) {
+      return (s == '@') ? s : '"' + s + '"';
+    });
+    return 'get(' + src.join(', ') + ')';
   };
 
   Parser.prototype.parseVar = function(src) {
@@ -324,7 +356,7 @@ var jinja;
       var i = expr.indexOf('=');
       var name = expr.slice(0, i).trim();
       var value = expr.slice(i + 1).trim();
-      this.push('set(' + JSON.stringify(name) + ',' + this.parseExpr(value) + ');');
+      this.push('set(' + JSON.stringify(name) + ',' + this.parseLiteralExpr(value) + ');');
     },
     'block': function(name) {
       if (this.isParent) {
