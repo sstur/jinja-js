@@ -17,7 +17,7 @@
     }
   };
 
-  describe('Values and Literals', function() {
+  describe('Values and Literals:', function() {
 
     it('tests string literals', function() {
       var tpl = jinja.compile('{{ "abc" }}');
@@ -46,7 +46,7 @@
 
   });
 
-  describe('Variables and Subscript Access', function() {
+  describe('Variables and Subscript Access:', function() {
 
     it('tests string literals', function() {
       var tpl = jinja.compile('{{ foo.bar }}');
@@ -67,7 +67,7 @@
 
   });
 
-  describe('Unescaped Output', function() {
+  describe('Unescaped Output:', function() {
 
     it('tests string literals', function() {
       var tpl = jinja.compile("{{{ text }}}");
@@ -82,7 +82,7 @@
 
   });
 
-  describe('Tag: set/assign', function() {
+  describe('Tag: set/assign:', function() {
 
     it('sets any value as a variable in the current context', function() {
       expect(jinja.compile('{% assign count = 0 %}{{ count }}')({})).to.equal('0');
@@ -121,7 +121,7 @@
     });
   });
 
-  describe('Filter', function() {
+  describe('Filter:', function() {
     var opts = {filters: filters};
 
     function testFilter(filter, input, output, message) {
@@ -131,7 +131,7 @@
       });
     }
 
-    describe('numbers and strings', function() {
+    describe('numbers and strings:', function() {
       var tpl = jinja.compile('{{ 0|add(1) }}');
       expect(tpl({}, opts)).to.equal('1');
 
@@ -146,15 +146,15 @@
       testFilter('split:":" | join:")"', { v: 'a:b:c' }, 'a)b)c', 'test alternate (liquid-style) filter args');
     });
 
-    describe('html', function() {
+    describe('html:', function() {
       testFilter('html', { v: '<&>' }, '&lt;&amp;&gt;', 'Unescaped output');
     });
 
-    describe('safe', function() {
+    describe('safe:', function() {
       testFilter('safe', { v: '<&>' }, '<&>', 'Unescaped output');
     });
 
-    describe('alternate syntax', function() {
+    describe('alternate syntax:', function() {
       var tpl = jinja.compile('{{ 0 | add: 1 }}');
       expect(tpl({}, opts)).to.equal('1');
 
@@ -164,7 +164,7 @@
 
   });
 
-  describe('Whitespace Control', function() {
+  describe('Whitespace Control:', function() {
 
     it('leading and trailing whitespace', function() {
       var tpl = jinja.compile(' {{- "abc" }} ');
@@ -182,7 +182,7 @@
 
   });
 
-  describe('Tag: if', function() {
+  describe('Tag: if:', function() {
 
     it('tests truthy and falsy values', function() {
       var tpl = jinja.compile('{% if foo %}hi!{% endif %}{% if bar %}nope{% endif %}');
@@ -265,7 +265,7 @@
 
   });
 
-  describe('Tag: else', function() {
+  describe('Tag: else:', function() {
 
     it('gets used', function() {
       var tpl = jinja.compile('{% if foo.length > 1 %}hi!{% else %}nope{% endif %}');
@@ -280,7 +280,7 @@
       expect(fn).to.throwException();
     });
 
-    describe('elseif', function() {
+    describe('elseif:', function() {
       it('works nicely', function() {
         var tpl = jinja.compile('{% if foo.length > 2 %}foo{% elseif foo.length < 2 %}bar{% endif %}');
         expect(tpl({ foo: [1, 2, 3] })).to.equal('foo');
@@ -303,7 +303,7 @@
       expect(tpl({ bar: false })).to.equal('bop');
     });
 
-    describe('in "for" tags', function() {
+    describe('in "for" tags:', function() {
       it('can be used as fallback', function() {
         var tpl = jinja.compile('{% for foo in bar %}blah{% else %}hooray!{% endfor %}');
         expect(tpl({ bar: [] })).to.equal('hooray!');
@@ -322,7 +322,7 @@
     });
   });
 
-  describe('Tag: for', function() {
+  describe('Tag: for:', function() {
 
     var tpl = jinja.compile('{% for foo in bar %}{{ foo }}, {% endfor %}');
     it('loops arrays', function() {
@@ -333,7 +333,7 @@
       expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('baz, pow, foo, ');
     });
 
-    describe('loop object', function() {
+    describe('loop object:', function() {
       it('index0', function() {
         var tpl = jinja.compile('{% for foo in bar %}[{{ loop.index0 }}, {{ foo }}]{% endfor %}');
         expect(tpl({ bar: ['foo', 'bar', 'baz'] })).to.equal('[0, foo][1, bar][2, baz]');
@@ -363,7 +363,7 @@
 
   });
 
-  describe('Tag: include', function() {
+  describe('Tag: include:', function() {
 
     it('includes the given template', function() {
       jinja.compile('{{array.length}}', { filename: 'included_2.html' });
@@ -380,7 +380,7 @@
 
   });
 
-  //describe('Tag: extends', function() {
+  //describe('Tag: extends:', function() {
   //
   //  it('throws on circular references', function() {
   //    var circular1 = "{% extends 'extends_circular2.html' %}{% block content %}Foobar{% endblock %}",
@@ -400,7 +400,7 @@
   //  });
   //});
 
-  describe('Tag: block', function() {
+  describe('Tag: block:', function() {
 
     it('basic', function() {
       var tpl,

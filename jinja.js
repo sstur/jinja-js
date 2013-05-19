@@ -35,21 +35,13 @@ var jinja;
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
   var IDENS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
   var NUMBER = /^[+-]?\d+(\.\d+)?$/;
-  var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
-  var LITERALS = /('(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))/g;
   //non-primitive literals (array and object literals)
   var NON_PRIMITIVES = /\[[@#](,[@#])*\]|\[\]|\{([@i]:[@#])(,[@i]:[@#])*\}|\{\}/g;
   //bare identifiers in object literals: {foo: 'value'}
   var OBJECT_IDENTS = /[$_a-z][$\w]*/ig;
-
-  //note: $ is not allowed in dot-notation identifiers
-  //note: variable will also match true, false, null (and, or, not) and b.2
-  var VARIABLE = /^(?:([_a-z]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
-
-  //note: VARIABLES will support a.$b but not a.2; a[2] is fine
+  //note: supports a.$b but not a.2; a[2] is fine
   var VARIABLES = /([$_a-z][$\w]*)(\.[$_a-z][$\w]*|\[[@#]\])*/ig;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
-  var PROPS = /\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\]/g;
   //extended (english) operators
   var EOPS = /(^|[^$\w])(and|or|not|is|isnot)([^$\w]|$)/g;
   var L_SPACE = /^\s+/;
@@ -134,8 +126,7 @@ var jinja;
     } else
     if (type == 'output') {
       var extracted = this.extractEnt(tag, STRINGS, '@');
-      //todo: adjust so we can have nested parens
-      extracted.src = extracted.src.replace(/\(([^)]+)\)/g, ':$1');
+      //todo: first extract '\\' then split
       extracted.src = extracted.src.split('|');
       var parts = this.injectEnt(extracted, '@');
       if (parts.length > 1) {
@@ -158,15 +149,14 @@ var jinja;
   };
 
   Parser.prototype.parseFilter = function(src) {
-    var parser = this;
     src = src.trim();
     var i = src.indexOf(':');
+    if (i < 0) i = src.indexOf('(');
     if (i < 0) return JSON.stringify([src]);
-    var name = src.slice(0, i), args = src.slice(i + 1), arr = [name];
-    args.replace(LITERALS, function(arg) {
-      arr.push(parser.parseLiteral(arg));
-    });
-    return '[' + JSON.stringify(arr).slice(1, -1) + ']';
+    var name = src.slice(0, i);
+    var args = src.charAt(i) == ':' ? src.slice(i + 1) : src.slice(i + 1, -1);
+    args = this.parseExpr(args, {terms: true});
+    return '[' + JSON.stringify(name) + ',' + args + ']';
   };
 
   Parser.prototype.extractEnt = function(src, regex, placeholder) {
@@ -203,7 +193,8 @@ var jinja;
 
   //parse expression containing literals (including objects/arrays) and variables (including dot and subscript notation)
   //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`, 'a || [1]`
-  Parser.prototype.parseExpr = function(src) {
+  Parser.prototype.parseExpr = function(src, opts) {
+    opts = opts || {};
     //extract string literals -> @
     var parsed1 = this.extractEnt(src, STRINGS, '@');
     //note: this will catch {not: 1} and a.is; could we replace temporarily and then check adjacent chars?
@@ -231,11 +222,14 @@ var jinja;
     simplified = simplified.replace(OPERATORS, '&');
     //allow 'not' unary operator
     simplified = simplified.replace(/!+[i]/g, 'i');
-    //simplify logical grouping
-    while (simplified != (simplified = simplified.replace(/\(i(&i)*\)/g, 'i')));
-    if (!simplified.match(/^i(&i)*$/)) {
-      throw new Error('Invalid expression: ' + src);
-    }
+    var terms = opts.terms ? simplified.split(',') : [simplified];
+    terms.forEach(function(term) {
+      //simplify logical grouping
+      while (term != (term = term.replace(/\(i(&i)*\)/g, 'i')));
+      if (!term.match(/^i(&i)*$/)) {
+        throw new Error('Invalid expression: ' + src);
+      }
+    });
     parsed2.src = this.injectEnt(parsed3, 'i');
     parsed2.src = parsed2.src.replace(VARIABLES, this.parseVarSimple.bind(this));
     parsed1.src = this.injectEnt(parsed2, '#');
@@ -256,44 +250,11 @@ var jinja;
     return 'get(' + src.join(', ') + ')';
   };
 
-  //todo: refactor this
-  Parser.prototype.parseVar = function(src) {
-    var parser = this;
-    src = src.trim();
-    if (LITERAL.test(src)) {
-      return src;
-    }
-    var ident = src.match(VARIABLE);
-    if (ident) {
-      var parts = [ident[1]];
-      src.replace(PROPS, function(s) {
-        parts.push(s.charAt(0) == '.' ? s.slice(1) : parser.parseLiteral(s.slice(1, -1)));
-      });
-      return 'get(' + JSON.stringify(parts).slice(1, -1) + ')';
-    }
-    throw Error('Invalid literal or identifier: ' + src);
-  };
-
   //escapes a name to be used as a javascript identifier
   Parser.prototype.escName = function(str) {
     return str.replace(/\W/g, function(s) {
       return '$' + s.charCodeAt(0).toString(16);
     });
-  };
-
-  //currently parses null, true/false, numbers and strings
-  Parser.prototype.parseLiteral = function(literal) {
-    if (literal == 'null') {
-      return null;
-    } else
-    if (literal == 'true' || literal == 'false') {
-      return (literal == 'true');
-    } else
-    if (literal.match(/^[\d+-]/)) {
-      return parseFloat(literal) || 0;
-    } else {
-      return this.parseQuoted(literal);
-    }
   };
 
   Parser.prototype.parseQuoted = function(str) {
@@ -329,21 +290,22 @@ var jinja;
       this.nest.shift();
       this.push('}');
     },
-    'for': function(expr) {
-      var pieces = expr.split(' in ');
-      var loopvar = pieces[0].trim();
-      this.push('each(' + this.parseVar(pieces[1]) + ',' + JSON.stringify(loopvar) + ',function() {');
+    'for': function(str) {
+      var i = str.indexOf(' in ');
+      var name = str.slice(0, i).trim();
+      var expr = str.slice(i + 4).trim();
+      this.push('each(' + this.parseExpr(expr) + ',' + JSON.stringify(name) + ',function() {');
       this.nest.unshift('for');
     },
     'endfor': function() {
       this.nest.shift();
       this.push('});');
     },
-    'set': function(expr) {
-      var i = expr.indexOf('=');
-      var name = expr.slice(0, i).trim();
-      var value = expr.slice(i + 1).trim();
-      this.push('set(' + JSON.stringify(name) + ',' + this.parseExpr(value) + ');');
+    'set': function(stmt) {
+      var i = stmt.indexOf('=');
+      var name = stmt.slice(0, i).trim();
+      var expr = stmt.slice(i + 1).trim();
+      this.push('set(' + JSON.stringify(name) + ',' + this.parseExpr(expr) + ');');
     },
     'block': function(name) {
       if (this.isParent) {
