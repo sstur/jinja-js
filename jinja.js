@@ -8,7 +8,7 @@
  * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` to `!=`)
  * Note:
  * - `{% for n in object %}` will iterate the object's keys
- * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
+ * - subscript notation takes literals `a[0]` or simple variables `a[n]` but not `a[item.key]`
  * - `.2` is not a valid number literal; use `0.2`
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  *

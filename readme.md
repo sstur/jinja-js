@@ -64,14 +64,14 @@ This is mostly to keep the codebase and rendering logic simple. The goal of this
 Also note:
 
  - `{% for n in object %}` will iterate the object's keys
- - subscript notation takes only literals, such as `a[0]` or `a["b"]`
+ - subscript notation takes literals `a[0]` or simple variables `a[n]` but not `a[item.key]`
  - `.2` is not a valid number literal; use `0.2`
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
 
 To Do:
 
- - subscript to accept variables, as in `{% for n in obj %}{{ obj[n] }}{% endfor %}`
- - properties as functions: `items.find('foo')`
+ - variables can be functions: `getName(user)`
+ - properties as functions: `users[0].getName()`
 
 
 ##Test Coverage

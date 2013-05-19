@@ -336,6 +336,16 @@
       expect(tpl({ bar: { baz: 'foo', pow: 'bar', foo: 'baz' }})).to.equal('baz, pow, foo, ');
     });
 
+    it('loops object literals', function() {
+      tpl = jinja.compile("{% for foo in {baz: 'foo', pow: 'bar'} %}{{ foo }}, {% endfor %}");
+      expect(tpl({})).to.equal('baz, pow, ');
+    });
+
+    it('loops object literals', function() {
+      tpl = jinja.compile('{%for n in {a: 1, b: "b"} %}{{ foo[n] }}{% endfor %}');
+      expect(tpl({foo: {a: 'a', b: 2}})).to.equal('a2');
+    });
+
     describe('loop object:', function() {
       it('index0', function() {
         var tpl = jinja.compile('{% for foo in bar %}[{{ loop.index0 }}, {{ foo }}]{% endfor %}');
