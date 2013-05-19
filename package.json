@@ -4,7 +4,7 @@
     "name": "Simon Sturmer",
     "email": "sstur@me.com"
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "JavaScript templating engine based on Jinja2",
   "main": "jinja.js",
   "scripts": {
