@@ -362,6 +362,7 @@ var jinja;
 
   var getRuntime = function runtime(data, opts) {
     var defaults = {autoEscape: 'html'};
+    var _hasOwnProperty = Object.prototype.hasOwnProperty;
     var toString = function(val) {
       return (val == null || typeof val.toString != 'function') ? '' : '' + val.toString();
     };
@@ -381,7 +382,7 @@ var jinja;
       for (var i = 1, len = arguments.length; i < len; i++) {
         if (val == null) continue;
         n = arguments[i];
-        val = (n in val) ? val[n] : (typeof val._get == 'function' ? (val[n] = val._get(n)) : null);
+        val = (_hasOwnProperty.call(val, n)) ? val[n] : (typeof val._get == 'function' ? (val[n] = val._get(n)) : null);
       }
       return (val == null) ? null : val;
     };
