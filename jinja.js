@@ -11,8 +11,6 @@
  * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
  * - `.2` is not a valid number literal; use `0.2`
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
- * Todo:
- * - fix: `a.b[{}]`
  *
  */
 /*global require, exports, module, define */
@@ -34,7 +32,7 @@ var jinja;
   var IDENS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
   var NUMBER = /^[+-]?\d+(\.\d+)?$/;
   //non-primitive literals (array and object literals)
-  var NON_PRIMITIVES = /\[[@#](,[@#])*\]|\[\]|\{([@i]:[@#])(,[@i]:[@#])*\}|\{\}/g;
+  var NON_PRIMITIVES = /\[[@#~](,[@#~])*\]|\[\]|\{([@i]:[@#~])(,[@i]:[@#~])*\}|\{\}/g;
   //bare identifiers in object literals: {foo: 'value'}
   var OBJECT_IDENTS = /[$_a-z][$\w]*/ig;
   //note: supports a.$b but not a.2; a[2] is fine
@@ -185,12 +183,12 @@ var jinja;
   //replace complex literals without mistaking subscript notation with array literals
   Parser.prototype.replaceComplex = function(s) {
     var parsed = this.extractEnt(s, /i(\[[@#]\])+/g, 'v');
-    parsed.src = parsed.src.replace(NON_PRIMITIVES, '#');
+    parsed.src = parsed.src.replace(NON_PRIMITIVES, '~');
     return this.injectEnt(parsed, 'v');
   };
 
   //parse expression containing literals (including objects/arrays) and variables (including dot and subscript notation)
-  //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`, 'a || [1]`
+  //valid expressions: `a + 1 > b.c or c == null`, `a and b[1] != c`, `(a < b) or (c < d and e)`, 'a || [1]`
   Parser.prototype.parseExpr = function(src, opts) {
     opts = opts || {};
     //extract string literals -> @
@@ -200,6 +198,7 @@ var jinja;
       return (op in operators) ? before + operators[op] + after : s;
     });
     //sub out non-string literals (numbers/true/false/null) -> #
+    // the distinction is necessary because @ can be object identifiers, # cannot
     var parsed2 = this.extractEnt(parsed1.src, IDENS_AND_NUMS, function(s) {
       return (s in constants || NUMBER.test(s)) ? '#' : null;
     });
@@ -209,13 +208,14 @@ var jinja;
     parsed3.src = parsed3.src.replace(/\s+/g, '');
     //the rest of this is simply to boil the expression down and check validity
     var simplified = parsed3.src;
-    //now @ represents strings, and # represents all other literals
-    // the distinction is necessary because @ can be object identifiers, # cannot
+    //sub out complex literals (objects/arrays) -> ~
+    // the distinction is necessary because @ and # can be subscripts but ~ cannot
     while (simplified != (simplified = this.replaceComplex(simplified)));
+    //now @ represents strings, # represents other primitives and ~ represents non-primitives
     //replace dot/subscript notation
     while (simplified != (simplified = simplified.replace(/i(.i|\[[@#]\])+/, 'i')));
-    //sub in "i" for @ and # (now "i" represents all literals)
-    simplified = simplified.replace(/[@#]/g, 'i');
+    //sub in "i" for @ and # and ~ (now "i" represents all literals)
+    simplified = simplified.replace(/[@#~]/g, 'i');
     //sub out operators
     simplified = simplified.replace(OPERATORS, '&');
     //allow 'not' unary operator
