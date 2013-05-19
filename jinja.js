@@ -48,7 +48,7 @@ var jinja;
   var T_SPACE = /\s+$/;
 
   var delimeters = {
-    '{%': 'tag',
+    '{%': 'directive',
     '{{': 'output',
     '{#': 'comment'
   };
@@ -121,7 +121,7 @@ var jinja;
     if (!tag) return;
     var type = delimeters[tag.slice(0, 2)];
     tag = tag.slice(2, -2).trim();
-    if (type == 'tag') {
+    if (type == 'directive') {
       this.compileTag(tag);
     } else
     if (type == 'output') {
@@ -150,8 +150,8 @@ var jinja;
 
   Parser.prototype.parseFilter = function(src) {
     src = src.trim();
-    var i = src.indexOf(':');
-    if (i < 0) i = src.indexOf('(');
+    var match = src.match(/[:(]/);
+    var i = match ? match.index : -1;
     if (i < 0) return JSON.stringify([src]);
     var name = src.slice(0, i);
     var args = src.charAt(i) == ':' ? src.slice(i + 1) : src.slice(i + 1, -1);
