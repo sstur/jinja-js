@@ -58,9 +58,6 @@
       tpl = jinja.compile("{{ foo[''] }}");
       expect(tpl({foo: {'': false}})).to.equal('false');
 
-      tpl = jinja.compile('{{ foo.0 }}');
-      expect(tpl({foo: {'0': 1}})).to.equal('1');
-
       tpl = jinja.compile('{{ foo[1] }}');
       expect(tpl({foo: {'1': 2}})).to.equal('2');
 

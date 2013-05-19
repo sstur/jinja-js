@@ -13,6 +13,8 @@
  * - filter arguments can only be literals
  * - `.2` is not a valid number literal; use `0.2`
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
+ * Todo:
+ * - fix: `a.b[{}]`
  *
  */
 /*global require, exports, module, define */
@@ -30,25 +32,26 @@ var jinja;
 })(function(require, jinja) {
   "use strict";
   var TOKENS = /\{\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}\}|\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+\}\}|\{([#%])('(\\.|[^'])*'|"(\\.|[^"'"])*"|[^}])+?\1\}/g;
-  //note: $ is not allowed in dot-notation identifiers
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
-  var NON_STRING_LITERALS = /true|false|null|([+-]?\d+(\.\d+)?)/g;
+  var IDENS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
+  var NUMBER = /^[+-]?\d+(\.\d+)?$/;
   var LITERAL = /^(?:'(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))$/;
   var LITERALS = /('(\\.|[^'])*'|"(\\.|[^"'"])*"|true|false|null|([+-]?\d+(\.\d+)?))/g;
   //non-primitive literals (array and object literals)
-  var NON_PRIMITIVES = /\[[@%](,[@%])*\]|\[\]|\{([@i]:[@%])(,[@i]:[@%])*\}|\{\}/g;
+  var NON_PRIMITIVES = /\[[@#](,[@#])*\]|\[\]|\{([@i]:[@#])(,[@i]:[@#])*\}|\{\}/g;
   //bare identifiers in object literals: {foo: 'value'}
   var OBJECT_IDENTS = /[$_a-z][$\w]*/ig;
+
+  //note: $ is not allowed in dot-notation identifiers
   //note: variable will also match true, false, null (and, or, not) and b.2
   var VARIABLE = /^(?:([_a-z]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)$/i;
-  //experimental: VARIABLES will support a.$b but not a.2 and not a[2]
-  var VARIABLES = /([$_a-z][$\w]*)(\.[$_a-z][$\w]*|\[@\])*/ig;
-  //all instances of literals and variables including dot and subscript notation (todo: include true/false/null?)
-  var ALL_IDENTS = /([+-]?\d+(\.\d+)?)|(([_a-z]\w*)(\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\])*)|('(\\.|[^'])*'|"(\\.|[^"'"])*")/ig;
+
+  //note: VARIABLES will support a.$b but not a.2; a[2] is fine
+  var VARIABLES = /([$_a-z][$\w]*)(\.[$_a-z][$\w]*|\[[@#]\])*/ig;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   var PROPS = /\.\w+|\[(\d)+\]|\['(\\.|[^'])*'\]|\["(\\.|[^"'"])*"\]/g;
   //extended (english) operators
-  var EOPS = /\b(and|or|not|is|isnot)\b/g;
+  var EOPS = /(^|[^$\w])(and|or|not|is|isnot)([^$\w]|$)/g;
   var L_SPACE = /^\s+/;
   var T_SPACE = /\s+$/;
 
@@ -64,6 +67,12 @@ var jinja;
     not: '!',
     is: '==',
     isnot: '!='
+  };
+
+  var constants = {
+    'true': true,
+    'false': false,
+    'null': null
   };
 
   function Parser() {
@@ -125,6 +134,7 @@ var jinja;
     } else
     if (type == 'output') {
       var extracted = this.extractEnt(tag, STRINGS, '@');
+      //todo: adjust so we can have nested parens
       extracted.src = extracted.src.replace(/\(([^)]+)\)/g, ':$1');
       extracted.src = extracted.src.split('|');
       var parts = this.injectEnt(extracted, '@');
@@ -160,10 +170,14 @@ var jinja;
   };
 
   Parser.prototype.extractEnt = function(src, regex, placeholder) {
-    var subs = [];
+    var subs = [], isFunc = typeof placeholder == 'function';
     src = src.replace(regex, function(str) {
-      subs.push(str);
-      return placeholder;
+      var replacement = isFunc ? placeholder(str) : placeholder;
+      if (replacement) {
+        subs.push(str);
+        return replacement;
+      }
+      return str;
     });
     return {src: src, subs: subs};
   };
@@ -180,67 +194,39 @@ var jinja;
     return isArr ? arr : arr[0];
   };
 
-  //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`
-  Parser.prototype.parseExpr = function(src) {
-    //first pass we extract string literals -> @
-    var parsed1 = this.extractEnt(src, STRINGS, '@');
-    //replace and/or/not
-    parsed1.src = parsed1.src.replace(EOPS, function(s) {
-      return operators[s] || s;
-    });
-    //reconstruct
-    src = this.injectEnt(parsed1, '@');
-    //sub out vars and literals
-    parsed1 = this.extractEnt(src, ALL_IDENTS, 'i');
-    //parse variables
-    parsed1.subs = parsed1.subs.map(this.parseVar.bind(this));
-    //sub out operators
-    var parsed2 = this.extractEnt(parsed1.src, OPERATORS, '&');
-    //remove white space
-    var simplified = parsed2.src = parsed2.src.replace(/\s+/g, '');
-    //allow 'not' unary operator
-    simplified = simplified.replace(/!+i/g, 'i');
-    //simplify logical grouping
-    while (simplified != (simplified = simplified.replace(/\(i(&i)*\)/g, 'i')));
-    if (!simplified.match(/^i(&i)*$/)) {
-      throw new Error('Invalid expression: ' + src);
-    }
-    parsed1.src = this.injectEnt(parsed2, '&');
-    return this.injectEnt(parsed1, 'i');
-  };
-
-  //continually replace regex until string doesn't change anymore
-  //Parser.prototype.replaceAll = function(str, regex, replacement) {
-  //  while (str != (str = str.replace(regex, replacement)));
-  //  return str;
-  //};
-
   //replace complex literals without mistaking subscript notation with array literals
   Parser.prototype.replaceComplex = function(s) {
-    var parsed = this.extractEnt(s, /i(\[@\])+/g, 'v');
-    parsed.src = parsed.src.replace(NON_PRIMITIVES, '%');
+    var parsed = this.extractEnt(s, /i(\[[@#]\])+/g, 'v');
+    parsed.src = parsed.src.replace(NON_PRIMITIVES, '#');
     return this.injectEnt(parsed, 'v');
   };
 
-  //parse an expression containing only literals (including array literals)
-  Parser.prototype.parseLiteralExpr = function(src) {
+  //parse expression containing literals (including objects/arrays) and variables (including dot and subscript notation)
+  //valid expressions: `a + 1 > b or c == null`, `a and b != c`, `(a < b) or (c < d and e)`, 'a || [1]`
+  Parser.prototype.parseExpr = function(src) {
     //extract string literals -> @
     var parsed1 = this.extractEnt(src, STRINGS, '@');
-    //remove white-space
-    parsed1.src = parsed1.src.replace(/\s+/g, '');
-    //sub out non-string literals (numbers/true/false/null) -> %
-    var parsed2 = this.extractEnt(parsed1.src, NON_STRING_LITERALS, '%');
+    //note: this will catch {not: 1} and a.is; could we replace temporarily and then check adjacent chars?
+    parsed1.src = parsed1.src.replace(EOPS, function(s, before, op, after) {
+      return (op in operators) ? before + operators[op] + after : s;
+    });
+    //sub out non-string literals (numbers/true/false/null) -> #
+    var parsed2 = this.extractEnt(parsed1.src, IDENS_AND_NUMS, function(s) {
+      return (s in constants || NUMBER.test(s)) ? '#' : null;
+    });
     //sub out object/variable identifiers -> i
     var parsed3 = this.extractEnt(parsed2.src, OBJECT_IDENTS, 'i');
+    //remove white-space
+    parsed3.src = parsed3.src.replace(/\s+/g, '');
     //the rest of this is simply to boil the expression down and check validity
     var simplified = parsed3.src;
-    //now @ represents strings, and % represents all other literals
-    // the distinction is necessary because @ can be object identifiers, % cannot
+    //now @ represents strings, and # represents all other literals
+    // the distinction is necessary because @ can be object identifiers, # cannot
     while (simplified != (simplified = this.replaceComplex(simplified)));
     //replace dot/subscript notation
-    while (simplified != (simplified = simplified.replace(/i(.i|\[@\])+/, 'i')));
-    //sub in "i" for @ and % (now "i" represents all literals)
-    simplified = simplified.replace(/[@%]/g, 'i');
+    while (simplified != (simplified = simplified.replace(/i(.i|\[[@#]\])+/, 'i')));
+    //sub in "i" for @ and # (now "i" represents all literals)
+    simplified = simplified.replace(/[@#]/g, 'i');
     //sub out operators
     simplified = simplified.replace(OPERATORS, '&');
     //allow 'not' unary operator
@@ -250,25 +236,27 @@ var jinja;
     if (!simplified.match(/^i(&i)*$/)) {
       throw new Error('Invalid expression: ' + src);
     }
+    parsed2.src = this.injectEnt(parsed3, 'i');
     parsed2.src = parsed2.src.replace(VARIABLES, this.parseVarSimple.bind(this));
-    parsed1.src = this.injectEnt(parsed2, '%');
+    parsed1.src = this.injectEnt(parsed2, '#');
     return this.injectEnt(parsed1, '@');
   };
 
   Parser.prototype.parseVarSimple = function(src) {
     var args = Array.prototype.slice.call(arguments);
     var str = args.pop(), index = args.pop() + src.length;
-    //quote bare object identifiers (might be reserved words like {while: 1})
+    //quote bare object identifiers (might be a reserved word like {while: 1})
     if (str.charAt(index) == ':') {
       return '"' + src + '"';
     }
-    src = src.replace(/\[@\]/g, '.@');
+    src = src.replace(/\[([@#])\]/g, '.$1');
     src = src.split('.').map(function(s) {
       return (s == '@') ? s : '"' + s + '"';
     });
     return 'get(' + src.join(', ') + ')';
   };
 
+  //todo: refactor this
   Parser.prototype.parseVar = function(src) {
     var parser = this;
     src = src.trim();
@@ -324,7 +312,6 @@ var jinja;
   //the context 'this' inside tagHandlers is the parser instance
   var tagHandlers = {
     'if': function(expr) {
-      this.parseExpr(expr);
       this.push('if (' + this.parseExpr(expr) + ') {');
       this.nest.unshift('if');
     },
@@ -356,7 +343,7 @@ var jinja;
       var i = expr.indexOf('=');
       var name = expr.slice(0, i).trim();
       var value = expr.slice(i + 1).trim();
-      this.push('set(' + JSON.stringify(name) + ',' + this.parseLiteralExpr(value) + ');');
+      this.push('set(' + JSON.stringify(name) + ',' + this.parseExpr(value) + ');');
     },
     'block': function(name) {
       if (this.isParent) {
