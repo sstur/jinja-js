@@ -87,8 +87,8 @@
     it('sets any value as a variable in the current context', function() {
       expect(jinja.compile('{% assign count = 0 %}{{ count }}')({})).to.equal('0');
       expect(jinja.compile('{% set foo = "bar" %} {{ foo }}')({})).to.equal(' bar');
-      //expect(jinja.compile('{% set foo = ["hi", "bye"] %} {{ foo[0] }}')({})).to.equal(' hi');
-      //expect(jinja.compile('{% set foo = { bar: "bar" } %} {{ foo.bar }}')({})).to.equal(' bar');
+      expect(jinja.compile('{% set foo = ["hi", "bye"] %} {{ foo[0] }}')({})).to.equal(' hi');
+      expect(jinja.compile('{% set foo = { bar: "bar" } %} {{ foo.bar }}')({})).to.equal(' bar');
       expect(jinja.compile('{% set foo = 99 %} {{ foo }}')({})).to.equal(' 99');
       expect(jinja.compile('{% set foo = true %}{% if foo == true %}hi{% endif %}')({})).to.equal('hi');
     });
@@ -157,7 +157,7 @@
     describe('alternate syntax', function() {
       var tpl = jinja.compile('{{ 0 | add: 1 }}');
       expect(tpl({}, opts)).to.equal('1');
-      
+
       tpl = jinja.compile('{{ "a" | add: "b" }}');
       expect(tpl({}, opts)).to.equal('ab');
     });
