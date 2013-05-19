@@ -1,4 +1,7 @@
 /*!
+ * Jinja Templating for JavaScript v0.1.4
+ * https://github.com/sstur/jinja
+ *
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]
  * In the interest of simplicity, it deviates from Jinja2 as follows:
  * - Line statements, cycle, super, macros and block nesting are not implemented
