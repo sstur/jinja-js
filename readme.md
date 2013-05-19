@@ -56,8 +56,8 @@ This implementation deviates from the official [Jinja2][jinja2] as follows:
  - Line statements, cycle, super, macros and block nesting are not implemented
  - Auto escapes html by default (the filter is "html" not "e")
  - Only "html" and "safe" filters are built in
- - Object/Array literals are not valid in expressions; `for i in [1, 2]` is not valid
- - Filters are not valid in expressions; `foo|length > 1` is invalid
+ - Filters are not valid in expressions; `foo|length > 1` is not valid
+ - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` to `!=`)
 
 This is mostly to keep the codebase and rendering logic simple. The goal of this implementation is to be slim and compile to readable JavaScript. There are other projects that aim to implement the complete Jinja2 spec.
 
@@ -65,13 +65,11 @@ Also note:
 
  - `{% for n in object %}` will iterate the object's keys
  - subscript notation takes only literals, such as `a[0]` or `a["b"]`
- - filter arguments can only be literals
  - `.2` is not a valid number literal; use `0.2`
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
 
 To Do:
 
- - set/assign to accept array and object literals: `set a = [1, 2, 3]`
  - subscript to accept variables, as in `{% for n in obj %}{{ obj[n] }}{% endfor %}`
  - properties as functions: `items.find('foo')`
 

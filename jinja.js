@@ -4,13 +4,11 @@
  * - Line statements, cycle, super, macros and block nesting are not implemented
  * - auto escapes html by default (the filter is "html" not "e")
  * - Only "html" and "safe" filters are built in
- * - Object/Array literals are not valid in expressions; `for i in [1, 2]` is not valid
- * - Filters are not valid in expressions; `foo|length > 1` is invalid
- * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` -> `!=`)
+ * - Filters are not valid in expressions; `foo|length > 1` is not valid
+ * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` to `!=`)
  * Note:
  * - `{% for n in object %}` will iterate the object's keys
  * - subscript notation takes only literals, such as `a[0]` or `a["b"]`
- * - filter arguments can only be literals
  * - `.2` is not a valid number literal; use `0.2`
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
  * Todo:
