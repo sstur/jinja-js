@@ -210,6 +210,7 @@ var jinja;
     var parsed3 = this.extractEnt(parsed2.src, OBJECT_IDENTS, 'i');
     //remove white-space
     parsed3.src = parsed3.src.replace(/\s+/g, '');
+
     //the rest of this is simply to boil the expression down and check validity
     var simplified = parsed3.src;
     //sub out complex literals (objects/arrays) -> ~
@@ -217,7 +218,7 @@ var jinja;
     while (simplified != (simplified = this.replaceComplex(simplified)));
     //now @ represents strings, # represents other primitives and ~ represents non-primitives
     //replace dot/subscript notation
-    while (simplified != (simplified = simplified.replace(/i(.i|\[[@#]\])+/, 'i')));
+    while (simplified != (simplified = simplified.replace(/i(\.i|\[[@#i]\])+/, 'i')));
     //sub in "i" for @ and # and ~ (now "i" represents all literals)
     simplified = simplified.replace(/[@#~]/g, 'i');
     //sub out operators
@@ -232,13 +233,14 @@ var jinja;
         throw new Error('Invalid expression: ' + src);
       }
     });
+
     parsed2.src = this.injectEnt(parsed3, 'i');
-    parsed2.src = parsed2.src.replace(VARIABLES, this.parseVarSimple.bind(this));
+    parsed2.src = parsed2.src.replace(VARIABLES, this.parseVar.bind(this));
     parsed1.src = this.injectEnt(parsed2, '#');
     return this.injectEnt(parsed1, '@');
   };
 
-  Parser.prototype.parseVarSimple = function(src) {
+  Parser.prototype.parseVar = function(src) {
     var args = Array.prototype.slice.call(arguments);
     var str = args.pop(), index = args.pop() + src.length;
     //quote bare object identifiers (might be a reserved word like {while: 1})
@@ -246,8 +248,9 @@ var jinja;
       return '"' + src + '"';
     }
     src = src.replace(/\[([@#])\]/g, '.$1');
+    src = src.replace(/\[.*?\]/g, '.$&');
     src = src.split('.').map(function(s) {
-      return (s == '@') ? s : '"' + s + '"';
+      return (s == '@') ? s : ((s.charAt(0) == '[') ? 'get("' + s.slice(1, -1) + '")' : '"' + s + '"');
     });
     return 'get(' + src.join(', ') + ')';
   };
