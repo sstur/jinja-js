@@ -82,6 +82,18 @@
 
   });
 
+  describe('Raw Output:', function() {
+
+    it('tests content within {%raw%} blocks', function() {
+      var tpl = jinja.compile("{%raw%}{{{ text }}}{%endraw%}");
+      expect(tpl({text: 'plain'})).to.equal('{{{ text }}}');
+
+      tpl = jinja.compile("{%raw%}{%{%endraw%}");
+      expect(tpl({})).to.equal('{%');
+    });
+
+  });
+
   describe('Tag: set/assign:', function() {
 
     it('sets any value as a variable in the current context', function() {
