@@ -31,7 +31,6 @@ var jinja;
   definition(function() {}, jinja = {});
 })(function(require, jinja) {
   "use strict";
-  var TOKENS = /\{\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?\}\}\}|\{\{('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?\}\}|\{%('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?%\}|\{#('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?#\}/g;
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
   var IDENS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
   var NUMBER = /^[+-]?\d+(\.\d+)?$/;
@@ -44,8 +43,16 @@ var jinja;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   //extended (english) operators
   var EOPS = /(^|[^$\w])(and|or|not|is|isnot)([^$\w]|$)/g;
-  var L_SPACE = /^\s+/;
-  var T_SPACE = /\s+$/;
+  var LEADING_SPACE = /^\s+/;
+  var TRAILING_SPACE = /\s+$/;
+
+  var START_TOKEN = /\{\{\{|\{\{|\{%|\{#/;
+  var TAGS = {
+    '{{{': /^('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?\}\}\}/,
+    '{{': /^('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?\}\}/,
+    '{%': /^('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?%\}/,
+    '{#': /^('(\\.|[^'])*'|"(\\.|[^"'"])*"|.)+?#\}/
+  };
 
   var delimeters = {
     '{%': 'directive',
@@ -88,30 +95,40 @@ var jinja;
 
   Parser.prototype.tokenize = function(src) {
     var lastEnd = 0, parser = this, trimLeading = false;
-    src.replace(TOKENS, function(token) {
-      var tagStart = arguments[arguments.length - 2], len = token.length;
-      var text = src.slice(lastEnd, tagStart);
-      if (trimLeading) text = text.replace(L_SPACE, '');
-      if (!parser.rawMode) {
-        token = token.replace(/^(\{+)-/, function(_, delim) {
-          text = text.replace(T_SPACE, '');
-          return delim;
-        });
-        token = token.replace(/-(\}+)$/, function(_, delim) {
-          trimLeading = true;
-          return delim;
-        });
-        if (token.slice(0, 3) == '{{{') {
-          //liquid-style: make {{{x}}} => {{x|safe}}
-          token = token.slice(1, -3) + '|safe}}';
-        }
+    matchAll(src, START_TOKEN, function(open, index, src) {
+      //here we match the rest of the src against a regex for this tag
+      var match = src.slice(index + open.length).match(TAGS[open]);
+      match = (match ? match[0] : '');
+      //here we sub out strings so we don't get false matches
+      var simplified = match.replace(STRINGS, '@');
+      //if we don't have a close tag or there is a nested open tag
+      if (!match || ~simplified.indexOf(open)) {
+        return index + 1;
+      }
+      var inner = match.slice(0, 0 - open.length);
+      //check for white-space collapse syntax
+      if (inner.charAt(0) == '-') var wsCollapseLeft = true;
+      if (inner.slice(-1) == '-') var wsCollapseRight = true;
+      inner = inner.replace(/^-|-$/g, '').trim();
+      //if we're in raw mode and we are not looking at an "endraw" tag, move along
+      if (parser.rawMode && (open + inner) != '{%endraw') {
+        return index + 1;
+      }
+      var text = src.slice(lastEnd, index);
+      lastEnd = index + open.length + match.length;
+      if (trimLeading) text = trimLeft(text);
+      if (wsCollapseLeft) text = trimRight(text);
+      if (wsCollapseRight) trimLeading = true;
+      if (open == '{{{') {
+        //liquid-style: make {{{x}}} => {{x|safe}}
+        open = '{{';
+        inner += '|safe';
       }
       parser.textHandler(text);
-      parser.tokenHandler(token);
-      lastEnd = tagStart + len;
+      parser.tokenHandler(open, inner);
     });
     var text = src.slice(lastEnd);
-    if (trimLeading) text = text.replace(L_SPACE, '');
+    if (trimLeading) text = trimLeft(text);
     this.textHandler(text);
   };
 
@@ -119,19 +136,13 @@ var jinja;
     this.push('write(' + JSON.stringify(text) + ');');
   };
 
-  Parser.prototype.tokenHandler = function(token) {
-    if (!token) return;
-    var type = delimeters[token.slice(0, 2)];
-    var tag = token.slice(2, -2).trim();
-    if (this.rawMode && tag != 'endraw') {
-      this.textHandler(token);
-      return;
-    }
+  Parser.prototype.tokenHandler = function(open, inner) {
+    var type = delimeters[open];
     if (type == 'directive') {
-      this.compileTag(tag);
+      this.compileTag(inner);
     } else
     if (type == 'output') {
-      var extracted = this.extractEnt(tag, STRINGS, '@');
+      var extracted = this.extractEnt(inner, STRINGS, '@');
       //replace || operators with ~
       extracted.src = extracted.src.replace(/\|\|/g, '~').split('|');
       //put back || operators
@@ -149,7 +160,6 @@ var jinja;
   };
 
   Parser.prototype.compileTag = function(str) {
-    str = str.trim();
     var directive = str.split(' ')[0];
     var handler = tagHandlers[directive];
     if (!handler) {
@@ -316,7 +326,7 @@ var jinja;
       this.nest.shift();
       this.push('});');
     },
-    'raw': function(str) {
+    'raw': function() {
       this.rawMode = true;
     },
     'endraw': function() {
@@ -499,5 +509,30 @@ var jinja;
   jinja.readTemplateFile = function(name) {
     throw new Error('Not implemented: readTemplateFile');
   };
+
+
+  /*!
+   * Helpers
+   */
+
+  function trimLeft(str) {
+    return str.replace(LEADING_SPACE, '');
+  }
+
+  function trimRight(str) {
+    return str.replace(TRAILING_SPACE, '');
+  }
+
+  function matchAll(str, reg, fn) {
+    //copy as global
+    reg = new RegExp(reg.source, 'g' + (reg.ignoreCase ? 'i' : '') + (reg.multiline ? 'm' : ''));
+    var match;
+    while ((match = reg.exec(str))) {
+      var result = fn(match[0], match.index, str);
+      if (typeof result == 'number') {
+        reg.lastIndex = result;
+      }
+    }
+  }
 
 });
