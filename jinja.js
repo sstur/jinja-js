@@ -92,17 +92,19 @@ var jinja;
       var tagStart = arguments[arguments.length - 2], len = token.length;
       var text = src.slice(lastEnd, tagStart);
       if (trimLeading) text = text.replace(L_SPACE, '');
-      token = token.replace(/^(\{+)-/, function(_, delim) {
-        text = text.replace(T_SPACE, '');
-        return delim;
-      });
-      token = token.replace(/-(\}+)$/, function(_, delim) {
-        trimLeading = true;
-        return delim;
-      });
-      if (token.slice(0, 3) == '{{{') {
-        //liquid-style: make {{{x}}} => {{x|safe}}
-        token = token.slice(1, -3) + '|safe}}';
+      if (!parser.rawMode) {
+        token = token.replace(/^(\{+)-/, function(_, delim) {
+          text = text.replace(T_SPACE, '');
+          return delim;
+        });
+        token = token.replace(/-(\}+)$/, function(_, delim) {
+          trimLeading = true;
+          return delim;
+        });
+        if (token.slice(0, 3) == '{{{') {
+          //liquid-style: make {{{x}}} => {{x|safe}}
+          token = token.slice(1, -3) + '|safe}}';
+        }
       }
       parser.textHandler(text);
       parser.tokenHandler(token);
@@ -117,10 +119,14 @@ var jinja;
     this.push('write(' + JSON.stringify(text) + ');');
   };
 
-  Parser.prototype.tokenHandler = function(tag) {
-    if (!tag) return;
-    var type = delimeters[tag.slice(0, 2)];
-    tag = tag.slice(2, -2).trim();
+  Parser.prototype.tokenHandler = function(token) {
+    if (!token) return;
+    var type = delimeters[token.slice(0, 2)];
+    var tag = token.slice(2, -2).trim();
+    if (this.rawMode && tag != 'endraw') {
+      this.textHandler(token);
+      return;
+    }
     if (type == 'directive') {
       this.compileTag(tag);
     } else
@@ -309,6 +315,12 @@ var jinja;
     'endfor': function() {
       this.nest.shift();
       this.push('});');
+    },
+    'raw': function(str) {
+      this.rawMode = true;
+    },
+    'endraw': function() {
+      this.rawMode = false;
     },
     'set': function(stmt) {
       var i = stmt.indexOf('=');
