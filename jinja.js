@@ -1,5 +1,5 @@
 /*!
- * Jinja Templating for JavaScript v0.1.4
+ * Jinja Templating for JavaScript v0.1.5
  * https://github.com/sstur/jinja
  *
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]
@@ -10,11 +10,12 @@
  * - Only "html" and "safe" filters are built in
  * - Filters are not valid in expressions; `foo|length > 1` is not valid
  * - Expression Tests (`if num is odd`) not implemented (`is` translates to `==` and `isnot` to `!=`)
- * Note:
- * - `{% for n in object %}` will iterate the object's keys
- * - subscript notation takes literals `a[0]` or simple variables `a[n]` but not `a[item.key]`
- * - `.2` is not a valid number literal; use `0.2`
+ *
+ * Notes:
  * - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
+ * - `{% for n in obj %}` iterates the object's keys; get the value with `{% for n in obj %}{{ obj[n] }}{% endfor %}`
+ * - subscript notation `a[0]` takes literals or simple variables but not `a[item.key]`
+ * - `.2` is not a valid number literal; use `0.2`
  *
  */
 /*global require, exports, module, define */

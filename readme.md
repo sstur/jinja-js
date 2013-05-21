@@ -63,17 +63,16 @@ This is mostly to keep the codebase and rendering logic simple. The goal of this
 
 Also note:
 
- - `{% for n in object %}` will iterate the object's keys
- - subscript notation takes literals `a[0]` or simple variables `a[n]` but not `a[item.key]`
- - `.2` is not a valid number literal; use `0.2`
  - if property is not found, but method '_get' exists, it will be called with the property name (and cached)
+ - `{% for n in obj %}` iterates the object's keys; get the value with `{% for n in obj %}{{ obj[n] }}{% endfor %}`
+ - subscript notation `a[0]` takes literals or simple variables but not `a[item.key]`
+ - `.2` is not a valid number literal; use `0.2`
 
-To Do:
+To-Do:
 
  - ExpressJS Support
- - `{% raw %}` blocks
- - variables can be functions: `getName(user)`
- - properties as functions: `users[0].getName()`
+ - variables as functions: `getUser(4).name`
+ - properties as methods: `users[0].getName()`
 
 
 ##Test Coverage
