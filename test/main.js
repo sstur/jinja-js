@@ -85,10 +85,13 @@
   describe('Raw Output:', function() {
 
     it('tests content within {%raw%} blocks', function() {
-      var tpl = jinja.compile("{%raw%}{{{ text }}}{%endraw%}");
-      expect(tpl({text: 'plain'})).to.equal('{{{ text }}}');
+      var tpl = jinja.compile("{%raw%}{{{a}}}{{endraw}}{%'endraw'%}{#comment#}{%}%}{{{{%endraw%}");
+      expect(tpl({text: 'plain'})).to.equal("{{{a}}}{{endraw}}{%'endraw'%}{#comment#}{%}%}{{{");
 
       tpl = jinja.compile("{%raw%}{%{%endraw%}");
+      expect(tpl({})).to.equal('{%');
+
+      tpl = jinja.compile("{%raw-%} {% {%-endraw%}");
       expect(tpl({})).to.equal('{%');
     });
 
