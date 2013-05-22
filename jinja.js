@@ -1,5 +1,5 @@
 /*!
- * Jinja Templating for JavaScript v0.1.5
+ * Jinja Templating for JavaScript v0.1.6
  * https://github.com/sstur/jinja
  *
  * This is a slimmed-down Jinja2 implementation [http://jinja.pocoo.org/]

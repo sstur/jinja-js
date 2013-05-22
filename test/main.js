@@ -58,6 +58,9 @@
       tpl = jinja.compile("{{ foo[''] }}");
       expect(tpl({foo: {'': false}})).to.equal('false');
 
+      tpl = jinja.compile("{{ a[b].c }}");
+      expect(tpl({a: {x: {c: 1}}, b: 'x'})).to.equal('1');
+
       tpl = jinja.compile('{{ foo[1] }}');
       expect(tpl({foo: {'1': 2}})).to.equal('2');
 
@@ -65,6 +68,21 @@
       expect(tpl({foo: [3, 4]})).to.equal('3');
     });
 
+  });
+
+  it('throws on bad accessor syntax', function() {
+    var fn1 = function() {
+      jinja.compile('{{ a.b[] }}');
+    };
+    var fn2 = function() {
+      jinja.compile('{{ a.b & a.c }}');
+    };
+    var fn3 = function() {
+      jinja.compile('{{ item.2 }}');
+    };
+    expect(fn1).to.throwException();
+    expect(fn2).to.throwException();
+    expect(fn3).to.throwException();
   });
 
   describe('Unescaped Output:', function() {
