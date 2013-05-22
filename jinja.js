@@ -33,14 +33,14 @@ var jinja;
 })(function(require, jinja) {
   "use strict";
   var STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'"])*"/g;
-  var IDENS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
+  var IDENTS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
   var NUMBER = /^[+-]?\d+(\.\d+)?$/;
   //non-primitive literals (array and object literals)
   var NON_PRIMITIVES = /\[[@#~](,[@#~])*\]|\[\]|\{([@i]:[@#~])(,[@i]:[@#~])*\}|\{\}/g;
-  //bare identifiers in object literals: {foo: 'value'}
-  var OBJECT_IDENTS = /[$_a-z][$\w]*/ig;
-  //note: supports a.$b but not a.2; a[2] is fine
-  var VARIABLES = /([$_a-z][$\w]*)(\.[$_a-z][$\w]*|\[[@#]\])*/ig;
+  //bare identifiers such as variables and in object literals: {foo: 'value'}
+  var IDENTIFIERS = /[$_a-z][$\w]*/ig;
+  var VARIABLES = /i(\.i|\[[@#i]\])*/g;
+  var ACCESSOR = /(\.i|\[[@#i]\])/g;
   var OPERATORS = /(===?|!==?|>=?|<=?|&&|\|\||[+\-\*\/%])/g;
   //extended (english) operators
   var EOPS = /(^|[^$\w])(and|or|not|is|isnot)([^$\w]|$)/g;
@@ -207,7 +207,7 @@ var jinja;
 
   //replace complex literals without mistaking subscript notation with array literals
   Parser.prototype.replaceComplex = function(s) {
-    var parsed = this.extractEnt(s, /i(\[[@#]\])+/g, 'v');
+    var parsed = this.extractEnt(s, /i(\.i|\[[@#i]\])+/g, 'v');
     parsed.src = parsed.src.replace(NON_PRIMITIVES, '~');
     return this.injectEnt(parsed, 'v');
   };
@@ -224,11 +224,11 @@ var jinja;
     });
     //sub out non-string literals (numbers/true/false/null) -> #
     // the distinction is necessary because @ can be object identifiers, # cannot
-    var parsed2 = this.extractEnt(parsed1.src, IDENS_AND_NUMS, function(s) {
+    var parsed2 = this.extractEnt(parsed1.src, IDENTS_AND_NUMS, function(s) {
       return (s in constants || NUMBER.test(s)) ? '#' : null;
     });
     //sub out object/variable identifiers -> i
-    var parsed3 = this.extractEnt(parsed2.src, OBJECT_IDENTS, 'i');
+    var parsed3 = this.extractEnt(parsed2.src, IDENTIFIERS, 'i');
     //remove white-space
     parsed3.src = parsed3.src.replace(/\s+/g, '');
 
@@ -238,42 +238,49 @@ var jinja;
     // the distinction is necessary because @ and # can be subscripts but ~ cannot
     while (simplified != (simplified = this.replaceComplex(simplified)));
     //now @ represents strings, # represents other primitives and ~ represents non-primitives
-    //replace dot/subscript notation
-    while (simplified != (simplified = simplified.replace(/i(\.i|\[[@#i]\])+/, 'i')));
-    //sub in "i" for @ and # and ~ (now "i" represents all literals)
-    simplified = simplified.replace(/[@#~]/g, 'i');
+    //replace complex variables (those with dot/subscript accessors) -> v
+    while (simplified != (simplified = simplified.replace(/i(\.i|\[[@#i]\])+/, 'v')));
+    //empty subscript or complex variables in subscript, are not permitted
+    simplified = simplified.replace(/[iv]\[v?\]/g, 'x');
+    //sub in "i" for @ and # and ~ and v (now "i" represents all literals, variables and identifiers)
+    simplified = simplified.replace(/[@#~v]/g, 'i');
     //sub out operators
-    simplified = simplified.replace(OPERATORS, '&');
+    simplified = simplified.replace(OPERATORS, '%');
     //allow 'not' unary operator
     simplified = simplified.replace(/!+[i]/g, 'i');
     var terms = opts.terms ? simplified.split(',') : [simplified];
     terms.forEach(function(term) {
       //simplify logical grouping
-      while (term != (term = term.replace(/\(i(&i)*\)/g, 'i')));
-      if (!term.match(/^i(&i)*$/)) {
+      while (term != (term = term.replace(/\(i(%i)*\)/g, 'i')));
+      if (!term.match(/^i(%i)*$/)) {
         throw new Error('Invalid expression: ' + src);
       }
     });
-
+    parsed3.src = parsed3.src.replace(VARIABLES, this.parseVar.bind(this));
     parsed2.src = this.injectEnt(parsed3, 'i');
-    parsed2.src = parsed2.src.replace(VARIABLES, this.parseVar.bind(this));
     parsed1.src = this.injectEnt(parsed2, '#');
     return this.injectEnt(parsed1, '@');
   };
 
   Parser.prototype.parseVar = function(src) {
     var args = Array.prototype.slice.call(arguments);
-    var str = args.pop(), index = args.pop() + src.length;
+    var str = args.pop(), index = args.pop();
     //quote bare object identifiers (might be a reserved word like {while: 1})
-    if (str.charAt(index) == ':') {
-      return '"' + src + '"';
+    if (src == 'i' && str.charAt(index + 1) == ':') {
+      return '"i"';
     }
-    src = src.replace(/\[([@#])\]/g, '.$1');
-    src = src.replace(/\[.*?\]/g, '.$&');
-    src = src.split('.').map(function(s) {
-      return (s == '@') ? s : ((s.charAt(0) == '[') ? 'get("' + s.slice(1, -1) + '")' : '"' + s + '"');
+    var parts = ['"i"'];
+    src.replace(ACCESSOR, function(part) {
+      if (part == '.i') {
+        parts.push('"i"');
+      } else
+      if (part == '[i]') {
+        parts.push('get("i")');
+      } else {
+        parts.push(part.slice(1, -1));
+      }
     });
-    return 'get(' + src.join(', ') + ')';
+    return 'get(' + parts.join(',') + ')';
   };
 
   //escapes a name to be used as a javascript identifier
