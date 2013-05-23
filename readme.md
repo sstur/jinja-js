@@ -1,8 +1,8 @@
 #JavaScript templating engine based on Jinja2
 
-Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed to run on Node or in the [browser][demo] and weighs in around 3K (min + gzip).
+Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed to run on Node or in the [browser][demo] and weighs in at 8.3KB minified / 3.2K gzip'd.
 
-Jinja was inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig]. They all have similar syntax for rendering variables, looping and filtering. This implementation aims to be compatible with Jinja2 and Liquid, but Twig is mostly the same also.
+Jinja is inspired by [Django's templating system][django], just like Ruby's [Liquid][liquid] and PHP's [Twig][twig]. They all have similar syntax for rendering variables, looping and filtering. This implementation aims to be compatible with Jinja2 and Liquid, but Twig is mostly the same also.
 
 Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
@@ -26,7 +26,9 @@ Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 
 This implementation of Jinja supports auto-escaping output by default, extensible filters, template inheritance, block scope, for/else and safe compilation to dependence-free javascript function.
 
-It should run on any browser or JS environment that supports ES5 (use es5-shim on IE8 and below) and JSON.
+We also add support for **dynamic getter methods**. For instance, lets say a given object `products` has a method `_get()` and a non-existent property is referenced like `{{ products.related }}`. Jinja will call `products._get('related')` and attach the result to products.related. Then it will continue processing the template.
+
+It should run on any browser or JS environment that supports ES5 (use es5-shim on IE8 and below) and JSON. No other libraries required.
 
 
 ##Documentation
