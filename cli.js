@@ -26,7 +26,7 @@
 
   var args = process.argv.slice(2);
   var flags = {};
-  while (args[0].charAt(0) == '-') {
+  while (args.length && args[0].charAt(0) == '-') {
     var flag = args.shift().replace(/^-+/, '');
     flags[flag] = 1;
   }
