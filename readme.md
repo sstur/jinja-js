@@ -88,7 +88,7 @@ There are several existing JavaScript implementations of the Jinja family of tem
 
 
 [docs]: docs/guide.md
-[demo]: http://sstur.com/jinja/demo/
+[demo]: http://sstur.com/jinja-js/demo/
 [django]: http://docs.djangoproject.com/en/dev/ref/templates/builtins/
 [liquid]: http://liquidmarkup.org/
 [twig]: http://twig.sensiolabs.org/
