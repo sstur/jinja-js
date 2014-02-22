@@ -55,7 +55,7 @@ You must use Jinja's comment syntax: `{# my comment #}`
 
 This implementation deviates from the official [Jinja2][jinja2] as follows:
 
- - Line statements, cycle, super, macros and block nesting are not implemented
+ - Line statements, cycle, super, macro tags and block nesting are not implemented
  - Auto escapes html by default (the filter is "html" not "e")
  - Only "html" and "safe" filters are built in
  - Filters are not valid in expressions; `foo|length > 1` is not valid
