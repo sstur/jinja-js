@@ -3,20 +3,24 @@
 (function() {
   "use strict";
   var fs = require('fs');
-  var path = require('path');
-  var jinja = require('./jinja');
+  var pathLib = require('path');
 
-  //if uglify-js is installed
-  try {
-    var uglifyjs = require('uglify-js');
-  } catch(e) {}
+  var commander = require('commander');
+  var uglifyjs = require('uglify-js');
 
-  var cwd = process.cwd(), dir = cwd;
+  var jinja = require('./lib/jinja');
 
-  //path delimiter is platform-specific
-  var join = path.join;
-  var dirname = path.dirname;
-  var basename = path.basename;
+  commander
+    .version(require('./package.json').version)
+    .usage('[options] <path/to/file ...>')
+    .option('-m, --min', 'Minify output')
+    .parse(process.argv);
+
+  var join = pathLib.join;
+  var basename = pathLib.basename;
+
+  var cwd = process.cwd();
+  var dir = cwd;
 
   //path delimiter is forward-slash
   var urljoin = function() {
@@ -24,13 +28,7 @@
     return path.replace(/\\/g, '/');
   };
 
-  var args = process.argv.slice(2);
-  var flags = {};
-  while (args.length && args[0].charAt(0) == '-') {
-    var flag = args.shift().replace(/^-+/, '');
-    flags[flag] = 1;
-  }
-  var paths = args;
+  var paths = commander.args;
   if (!paths.length) {
     console.log('No file specified');
     process.exit(1);
@@ -41,7 +39,7 @@
   function register($name, $func) {
     (function(name, func) {
       var tmpl = {name: name, render: func};
-      var module = (typeof jinja != 'undefined') ? jinja : (typeof require == 'function') ? require('jinja') : null;
+      var module = (typeof jinja !== 'undefined') ? jinja : (typeof require === 'function') ? require('jinja') : null;
       if (module && module.compiled) {
         module.compiled[name] = tmpl;
       }
@@ -61,7 +59,6 @@
 
   //use uglifyjs to minify compiled template
   var uglifyCode = function(code) {
-    if (!uglifyjs) return code;
     var jsp = uglifyjs.parser;
     var pro = uglifyjs.uglify;
     var ast = jsp.parse(code); // parse code and get the initial AST
@@ -80,7 +77,7 @@
     compiled = compiled.replace(/^function(.*?)\{([\s\S]*)\}/, '$2').trim();
     compiled = compiled.replace('$name', JSON.stringify(file));
     compiled = compiled.replace('$func', code);
-    if (flags.min) {
+    if (commander.min) {
       compiled = uglifyCode(compiled);
     }
     fs.writeFileSync(join(dir, file + '.js'), compiled, 'utf8');

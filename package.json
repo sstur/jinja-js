@@ -34,5 +34,9 @@
     "twig",
     "liquid"
   ],
-  "license": "BSD"
+  "license": "BSD",
+  "dependencies": {
+    "commander": "^2.6.0",
+    "uglify-js": "^2.4.16"
+  }
 }
