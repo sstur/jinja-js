@@ -17,13 +17,10 @@
     .parse(process.argv);
 
   var join = pathLib.join;
-  var basename = pathLib.basename;
-
-  var cwd = process.cwd();
-  var dir = cwd;
+  var basePath = process.cwd();
 
   //path delimiter is forward-slash
-  var urljoin = function() {
+  var urlJoin = function() {
     var path = join.apply(null, arguments);
     return path.replace(/\\/g, '/');
   };
@@ -36,6 +33,7 @@
 
   var fileCache = {};
 
+  //this will be converted toString() and $vars will be replaced
   function register($name, $func) {
     (function(name, func) {
       var tmpl = {name: name, render: func};
@@ -54,23 +52,36 @@
     if (file in fileCache) {
       return fileCache[file];
     }
-    return fileCache[file] = fs.readFileSync(join(dir, file), 'utf8');
+    return fileCache[file] = fs.readFileSync(join('.', file), 'utf8');
   };
 
-  //use uglifyjs to minify compiled template
-  var uglifyCode = function(code) {
-    var jsp = uglifyjs.parser;
-    var pro = uglifyjs.uglify;
-    var ast = jsp.parse(code); // parse code and get the initial AST
-    ast = pro.ast_mangle(ast); // get a new AST with mangled names
-    ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
-    return pro.gen_code(ast); // compressed code here
-  };
+  //for each path we process the file or directory contents
+  paths.forEach(function(path) {
+    path = pathLib.normalize(path);
+    //remove trailing slash(es)
+    path = path.replace(/[\\\/]+$/, '');
+    compilePath(path);
+  });
+
+  function compilePath(path) {
+    if (isDir(path)) {
+      var list = fs.readdirSync(join(basePath, path));
+      list.forEach(function(name) {
+        //skip files that begin with a symbol
+        if (list.match(/^[a-z0-9]/i)) {
+          compilePath(urlJoin(path, name));
+        }
+      });
+    } else {
+      compileFile(path);
+    }
+  }
 
   //writes compiled template ./views/main.html -> /views/main.html.js
-  var compileFile = function(file) {
+  function compileFile(file) {
     console.log('Compiling: ' + file);
     var text = jinja.readTemplateFile(file);
+    //todo: option determines if we should include the runtime or not
     var fn = jinja.compile(text).render;
     var code = fn.toString().replace(/^([^(]*)/, 'function');
     var compiled = register.toString();
@@ -78,48 +89,26 @@
     compiled = compiled.replace('$name', JSON.stringify(file));
     compiled = compiled.replace('$func', code);
     if (commander.min) {
-      compiled = uglifyCode(compiled);
+      compiled = minify(compiled);
     }
-    fs.writeFileSync(join(dir, file + '.js'), compiled, 'utf8');
-  };
+    //todo: option determines if we should save to file/stdout or push to array
+    fs.writeFileSync(join(basePath, file + '.js'), compiled, 'utf8');
+  }
 
-  var compilePath = function(path) {
+  //use uglifyjs to minify compiled template
+  function minify(code) {
+    var jsp = uglifyjs.parser;
+    var pro = uglifyjs.uglify;
+    var ast = jsp.parse(code); // parse code and get the initial AST
+    ast = pro.ast_mangle(ast); // get a new AST with mangled names
+    ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
+    return pro.gen_code(ast); // compressed code here
+  }
+
+  function isDir(path) {
     try {
-      var list = fs.readdirSync(join(dir, path));
+      var stat = fs.statSync(join(basePath, path));
     } catch(e) {}
-    if (list) {
-      //handle directories recursively
-      list.forEach(function(name) {
-        //skip files that begin with a symbol
-        if (!name.match(/^[a-z]/i)) return;
-        compilePath(urljoin(path, name));
-      });
-    } else
-    if (path.match(/\.html$/)) {
-      compileFile(path);
-    }
-  };
-
-  var isDir = function(path) {
-    try {
-      var stat = fs.statSync(join(dir, path));
-    } catch(e) {}
-    return (stat && stat.isDirectory()) ? true : false;
-  };
-
-  //for each path, we set the working directory and process the file or directory contents
-  paths.forEach(function(path) {
-    //remove trailing slash
-    path = path.replace(/[\\\/]$/, '');
-    if (isDir(path)) {
-      dir = join(cwd, path);
-      fs.readdirSync(dir).forEach(function(path) {
-        compilePath(path);
-      });
-    } else {
-      dir = join(cwd, path);
-      compilePath(basename(path));
-    }
-  });
-
+    return stat && stat.isDirectory() || false;
+  }
 })();
