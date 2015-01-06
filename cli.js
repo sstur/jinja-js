@@ -14,6 +14,8 @@
     .version(require('./package.json').version)
     .usage('[options] <path/to/file ...>')
     .option('-m, --min', 'Minify output')
+    .option('-o, --output <file>', 'Combine output into one file')
+    .option('    --no-runtime', 'Do not include the runtime in the output')
     .parse(process.argv);
 
   var join = pathLib.join;
@@ -32,6 +34,8 @@
   }
 
   var fileCache = {};
+  var outputBuffer = [];
+  var shouldBufferOutput = !!commander.output;
 
   //this will be converted toString() and $vars will be replaced
   function register($name, $func) {
@@ -62,6 +66,9 @@
     path = path.replace(/[\\\/]+$/, '');
     compilePath(path);
   });
+  if (shouldBufferOutput) {
+    fs.writeFileSync(join(basePath, commander.output), outputBuffer.join('\n'), 'utf8');
+  }
 
   function compilePath(path) {
     if (isDir(path)) {
@@ -81,18 +88,28 @@
   function compileFile(file) {
     console.log('Compiling: ' + file);
     var text = jinja.readTemplateFile(file);
-    //todo: option determines if we should include the runtime or not
-    var fn = jinja.compile(text).render;
+    var includeRuntime = (!shouldBufferOutput && !commander.noRuntime);
+    var fn = jinja.compile(text, {runtime: includeRuntime}).render;
     var code = fn.toString().replace(/^([^(]*)/, 'function');
-    var compiled = register.toString();
-    compiled = compiled.replace(/^function(.*?)\{([\s\S]*)\}/, '$2').trim();
-    compiled = compiled.replace('$name', JSON.stringify(file));
-    compiled = compiled.replace('$func', code);
-    if (commander.min) {
-      compiled = minify(compiled);
+    if (includeRuntime) {
+      var wrapper = register.toString();
+      wrapper = wrapper.replace(/^function(.*?)\{([\s\S]*)\}/, '$2').trim();
+      wrapper = wrapper.replace('$name', JSON.stringify(file));
+      code = wrapper.replace('$func', code);
+    } else {
+      //todo: require jinja; sub-out runtime
+      code = 'jinja[' + JSON.stringify('/' + file) + '] = ' + code + ';\n';
+      code = replaceLast(code, 'runtime(data, options)', 'jinja.runtime(data, options)');
     }
-    //todo: option determines if we should save to file/stdout or push to array
-    fs.writeFileSync(join(basePath, file + '.js'), compiled, 'utf8');
+    if (commander.min) {
+      code = minify(code);
+    }
+    if (shouldBufferOutput) {
+      outputBuffer.push(code);
+    } else {
+      //todo: determine if we should save to file or send to stdout
+      fs.writeFileSync(join(basePath, file + '.js'), code, 'utf8');
+    }
   }
 
   //use uglifyjs to minify compiled template
@@ -103,6 +120,14 @@
     ast = pro.ast_mangle(ast); // get a new AST with mangled names
     ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
     return pro.gen_code(ast); // compressed code here
+  }
+
+  function replaceLast(source, search, replace) {
+    var index = source.lastIndexOf(search);
+    if (index === -1) {
+      return source;
+    }
+    return source.slice(0, index) + replace + source.slice(index + search.length);
   }
 
   function isDir(path) {
