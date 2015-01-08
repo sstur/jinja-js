@@ -49,7 +49,10 @@ jQuery(function($) {
       return;
     }
     src = fn.toString();
-    if (src.charAt(0) == '(') src = src.slice(1, -1);
+    //Chrome adds some boilerplate here
+    if (src.match(/^[^\n]+\n\/\*\*\//)) {
+      src = src.replace('/**/', '');
+    }
     //convert linebreaks
     src = src.replace(/\r\n/g, '\n').replace(/\r/g, '');
     //remove line comments
