@@ -67,7 +67,28 @@
     compilePath(path);
   });
   if (shouldBufferOutput) {
-    fs.writeFileSync(join(basePath, commander.output), outputBuffer.join('\n'), 'utf8');
+    outputBuffer.unshift("exports.getRuntime = " + jinja.getRuntimeCode() + ";");
+    outputBuffer.unshift("exports.render = function(name) { return exports['/' + name].apply(null, Array.prototype.slice.call(arguments, 1)); };");
+    var name = commander.globalExport || 'jinja';
+    var code = [
+      "var " + name + ";",
+      "(function(definition) {",
+      "  if (typeof exports === 'object' && typeof module === 'object') {",
+      "    definition(null, exports);",
+      "    return (typeof define === 'function') ? define('" + name + "', function() { this.exports = module.exports }) : null;",
+      "  }",
+      "  if (typeof define === 'function') {",
+      "    return define.amd ? define(['require', 'exports'], definition) : define('" + name + "', definition);",
+      "  }",
+      "  definition(null, " + name + " = {});",
+      "})(function(_, exports) {",
+      outputBuffer.join('\n'),
+      "});"
+    ].join('\n');
+    if (commander.min) {
+      code = minify(code);
+    }
+    fs.writeFileSync(join(basePath, commander.output), code, 'utf8');
   }
 
   function compilePath(path) {
@@ -97,16 +118,15 @@
       wrapper = wrapper.replace('$name', JSON.stringify(file));
       code = wrapper.replace('$func', code);
     } else {
-      //todo: require jinja; sub-out runtime
-      code = 'jinja[' + JSON.stringify('/' + file) + '] = ' + code + ';\n';
-      code = replaceLast(code, 'runtime(data, options)', 'jinja.runtime(data, options)');
-    }
-    if (commander.min) {
-      code = minify(code);
+      code = 'exports[' + JSON.stringify('/' + file) + '] = ' + code + ';\n';
+      code = replaceLast(code, 'getRuntime(data, options)', 'exports.getRuntime(data, options)');
     }
     if (shouldBufferOutput) {
       outputBuffer.push(code);
     } else {
+      if (commander.min) {
+        code = minify(code);
+      }
       //todo: determine if we should save to file or send to stdout
       fs.writeFileSync(join(basePath, file + '.js'), code, 'utf8');
     }
