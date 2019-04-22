@@ -318,4 +318,4 @@ Included templates have access to the variables of the active context by
 
 [jinjadocs]: http://jinja.pocoo.org/docs/templates/
 [liquid]: http://liquidmarkup.org/
-[liquid_compatibility]: /compatibility.md
+[liquid_compatibility]: /docs/compatibility.md
