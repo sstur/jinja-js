@@ -1,4 +1,4 @@
-#JavaScript templating engine based on Jinja2
+# JavaScript templating engine based on Jinja2
 
 Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed to run on Node or in the [browser][demo] and weighs in at 8.3KB minified / 3.2K gzip'd.
 
@@ -17,12 +17,12 @@ Like its [homepage](http://jinja.pocoo.org/) says, "Jinja is beautiful":
 {% endblock %}
 ```
 
-##Demo
+## Demo
 
 [View Online Demo here.][demo]
 
 
-##Features
+## Features
 
 This implementation of Jinja supports auto-escaping output by default, extensible filters, template inheritance, block scope, for/else and safe compilation to dependence-free javascript function.
 
@@ -31,12 +31,12 @@ We also add support for **dynamic getter methods**. For instance, lets say a giv
 It should run on any browser or JS environment that supports ES5 (use es5-shim on IE8 and below) and JSON. No other libraries required.
 
 
-##Documentation
+## Documentation
 
 Detailed documentation [can be found here][docs].
 
 
-##Compatibility with Liquid
+## Compatibility with Liquid
 
 [Liquid markup][liquid] by Shopify is a Ruby template language very similar to Jinja (it is based on Django just like Jinja) but it has a few differences. For compatibility, we have implemented the Liquid syntax as well as the Jinja syntax in the following cases:
 
@@ -51,7 +51,7 @@ In those cases, this implementation will allow either syntax. However the follow
 You must use Jinja's comment syntax: `{# my comment #}`
 
 
-##Differences from Python's Jinja2
+## Differences from Python's Jinja2
 
 This implementation deviates from the official [Jinja2][jinja2] as follows:
 
@@ -77,12 +77,12 @@ To-Do:
  - properties as methods: `users[0].getName()`
 
 
-##Test Coverage
+## Test Coverage
 
 The tests use Mocha and were adapted from a similar and excellent [project][swig].
 
 
-##Existing Implementations
+## Existing Implementations
 
 There are several existing JavaScript implementations of the Jinja family of templating languages, many of which have different objectives than this project and may be suitable for some projects but not others. Some worth mentioning include [Nunjucks][nunjucks], [Swig][swig], [JinJS][jinjs], [Plate][plate] and [Liquid.js][liquidjs].
 
