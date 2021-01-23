@@ -1,3 +1,7 @@
+# Deprecation Notice
+
+This project has not been actively maintained for almost 7 years at the time I'm writing this. I do not recommend using this. There are plenty of better, more modern choices out there these days.
+
 # JavaScript templating engine based on Jinja2
 
 Jinja is one of the most used [template engines for Python][jinja2]. This project is a JavaScript implementation with emphasis on simplicity and performance, compiling templates into [readable JavaScript][demo] that minifies well. It is designed to run on Node or in the [browser][demo] and weighs in at 8.3KB minified / 3.2K gzip'd.
